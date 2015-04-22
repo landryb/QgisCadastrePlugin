@@ -25,10 +25,10 @@ from .connector import PostGisDBConnector
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from qgis.gui import QgsMessageBar
 
 from ..plugin import ConnectionError, InvalidDataException, DBPlugin, Database, Schema, Table, VectorTable, RasterTable, TableField, TableConstraint, TableIndex, TableTrigger, TableRule
 
+from ...qgsdatasourceuri import QgsDataSourceURI
 try:
 	from . import resources_rc
 except ImportError:
@@ -36,7 +36,6 @@ except ImportError:
 
 from ..html_elems import HtmlParagraph, HtmlList, HtmlTable
 
-from qgis.core import QgsCredentials
 
 
 def classFactory():
@@ -69,13 +68,12 @@ class PostGisDBPlugin(DBPlugin):
 
 	def connect(self, parent=None):
 		conn_name = self.connectionName()
-		settings = QSettings()
+		settings = QSettings('config.ini', QSettings.IniFormat)
 		settings.beginGroup( u"/%s/%s" % (self.connectionSettingsKey(), conn_name) )
 
 		if not settings.contains( "database" ): # non-existent entry?
 			raise InvalidDataException( self.tr('There is no defined database connection "%s".') % conn_name )
 
-		from qgis.core import QgsDataSourceURI
 		uri = QgsDataSourceURI()
 
 		settingsList = ["service", "host", "port", "database", "username", "password"]
@@ -84,8 +82,7 @@ class PostGisDBPlugin(DBPlugin):
 		# qgis1.5 use 'savePassword' instead of 'save' setting
 		savedPassword = settings.value("save", False, type=bool) or settings.value("savePassword", False, type=bool)
 
-		useEstimatedMetadata = settings.value("estimatedMetadata", False, type=bool)
-		sslmode = settings.value("sslmode", QgsDataSourceURI.SSLprefer, type=int)
+		sslmode = 0
 
 		settings.endGroup()
 
@@ -93,8 +90,6 @@ class PostGisDBPlugin(DBPlugin):
 			uri.setConnection(service, database, username, password, sslmode)
 		else:
 			uri.setConnection(host, port, database, username, password, sslmode)
-
-		uri.setUseEstimatedMetadata(useEstimatedMetadata)
 
 		err = u""
 		try:

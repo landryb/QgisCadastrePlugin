@@ -23,8 +23,6 @@ email                : brush.tyler@gmail.com
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from qgis.core import QgsDataSourceURI
-
 from .plugin import BaseError, DbError, ConnectionError
 
 class DBConnector:
