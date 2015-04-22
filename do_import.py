@@ -840,6 +840,7 @@ class cadastre_import_cli(QObject):
         self.edigeoLot = str(s.value('cadastre/edigeoLot','0', type=str))
         self.edigeoSourceProj = str(s.value('cadastre/edigeoSourceProj','EPSG:2154', type=str))
         self.edigeoTargetProj = str(s.value('cadastre/edigeoTargetProj','EPSG:2154', type=str))
+        self.connectionName = str(s.value('PostgreSQL/connections/selected','qadastre', type=str))
         self.dbType = u'postgis'
 
         # defined properties
@@ -850,7 +851,7 @@ class cadastre_import_cli(QObject):
 #            self.edigeoMakeValid = True
 
         msg = ''
-        if not self.db:
+        if not self.connectionName:
             msg+= u'Veuillez sélectionner une base de données\n'
 
         if not self.doMajicImport and not self.doEdigeoImport:
@@ -881,14 +882,15 @@ class cadastre_import_cli(QObject):
         Lancement du processus d'import
         '''
 
-        dbpluginclass = createDbPlugin( 'postgis', 'qadastre' )
-        connection = dbpluginclass.connect()
-        self.db = dbpluginclass.database()
-
         msg = self.checkImportInputData()
         if msg:
             print "critical:"+msg
             return
+
+        dbpluginclass = createDbPlugin( self.dbType, self.connectionName )
+        connection = dbpluginclass.connect()
+        self.db = dbpluginclass.database()
+
 
         # cadastreImport instance
         qi = cadastreImport(self)
