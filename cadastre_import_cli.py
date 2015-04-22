@@ -32,7 +32,6 @@ import shutil
 from distutils import dir_util
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from qgis.core import *
 from datetime import datetime
 
 # db_manager scripts
@@ -79,8 +78,8 @@ class cadastreImport(QObject):
             self.targetSrid = '2154'
 
         # create temporary directories
-        s = QSettings()
-        tempDir = s.value("cadastre/tempDir", '%s' % tempfile.gettempdir(), type=str)
+        s = QSettings('config.ini', QSettings.IniFormat)
+        tempDir = str(s.value("cadastre/tempDir", '%s' % tempfile.gettempdir(), type=str))
         self.ocScriptDir = tempfile.mkdtemp('', 'cad_oc_script_', tempDir)
         self.pScriptDir = tempfile.mkdtemp('', 'cad_p_script_', tempDir)
         self.edigeoDir = tempfile.mkdtemp('', 'cad_edigeo_source_', tempDir)
@@ -126,7 +125,6 @@ class cadastreImport(QObject):
         '''
         self.totalSteps = stepNumber
         self.step = 0
-        self.dialog.stepLabel.setText('<b>%s</b>' % title)
         self.qc.updateLog('<h3>%s</h3>' % title)
 
 
@@ -134,10 +132,7 @@ class cadastreImport(QObject):
         '''
         Update the progress bar
         '''
-        if self.go:
-            self.step+=1
-            self.dialog.pbProcess.setValue(int(self.step * 100/self.totalSteps))
-
+        print ".",
 
     def updateTimer(self):
         '''
@@ -223,7 +218,6 @@ class cadastreImport(QObject):
         for item in scriptList:
             if self.go:
                 s = item['script']
-                self.dialog.subStepLabel.setText(item['title'])
                 self.qc.updateLog('%s' % item['title'])
                 self.updateProgressBar()
                 self.replaceParametersInScript(s, replaceDict)
@@ -347,7 +341,6 @@ class cadastreImport(QObject):
         # Run previously defined SQL queries
         for item in scriptList:
             if self.go:
-                self.dialog.subStepLabel.setText(item['title'])
                 self.qc.updateLog('%s' % item['title'])
                 if item.has_key('script'):
                     s = item['script']
@@ -432,16 +425,8 @@ class cadastreImport(QObject):
                 self.dialog.majicSourceDir,
                 ', '.join([a['value'].upper() for a in self.dialog.majicSourceFileNames])
             )
-            missingMajicIgnore = QMessageBox.question(
-                self.dialog,
-                u'Cadastre',
-                msg + '\n\n' + u"Voulez-vous néanmoins continuer l'import ?",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-            )
-            if missingMajicIgnore != QMessageBox.Yes:
-                self.go = False
-                self.qc.updateLog(msg)
-                return False
+            print msg;
+            return False
 
         # Check if departement and direction are the same for every file
         if len(depdirs.keys()) > 1:
@@ -463,22 +448,8 @@ class cadastreImport(QObject):
                 self.dialog.edigeoDepartement,
                 self.dialog.edigeoDirection
             )
-            useFileDepDir = QMessageBox.question(
-                self.dialog,
-                u'Cadastre',
-                msg + '\n\n' + u"<br/><br/>Voulez-vous continuer l'import avec les numéros trouvés dans les fichiers ?",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-            )
-            if useFileDepDir == QMessageBox.Yes:
-                self.dialog.edigeoDepartement = fDep
-                self.dialog.inEdigeoDepartement.setText(fDep)
-                self.dialog.edigeoDirection = fDir
-                self.dialog.inEdigeoDirection.setValue(int(fDir))
-            else:
-                self.go = False
-                self.qc.updateLog(msg)
-                return False
-
+            print msg;
+            return False
 
         # 2nd path to insert data
         for item in self.dialog.majicSourceFileNames:
@@ -545,7 +516,6 @@ class cadastreImport(QObject):
 
         if self.go:
             # copy files in temp dir
-            self.dialog.subStepLabel.setText('Copie des fichiers')
             self.updateProgressBar()
             self.copyFilesToTemp(self.dialog.edigeoSourceDir, self.edigeoDir)
             self.updateTimer()
@@ -553,7 +523,6 @@ class cadastreImport(QObject):
 
         if self.go:
             # unzip edigeo files in temp dir
-            self.dialog.subStepLabel.setText('Extraction des fichiers')
             self.updateProgressBar()
             self.unzipFolderContent(self.edigeoDir)
             self.updateTimer()
@@ -611,7 +580,6 @@ class cadastreImport(QObject):
 
         for item in scriptList:
             if self.go:
-                self.dialog.subStepLabel.setText(item['title'])
                 self.qc.updateLog('%s' % item['title'])
                 s = item['script']
                 self.replaceParametersInScript(s, replaceDict)
@@ -626,7 +594,7 @@ class cadastreImport(QObject):
 
         # import edigeo *.thf and *.vec files into database
         if self.go:
-            self.dialog.subStepLabel.setText('Import des fichiers')
+            self.qc.updateLog('Import des fichiers')
             self.updateProgressBar()
             self.importAllEdigeoToDatabase()
             self.updateTimer()
@@ -683,7 +651,6 @@ class cadastreImport(QObject):
 
         for item in scriptList:
             if self.go:
-                self.dialog.subStepLabel.setText(item['title'])
                 self.qc.updateLog('%s' % item['title'])
                 s = item['script']
                 self.replaceParametersInScript(s, replaceDict)
@@ -697,7 +664,7 @@ class cadastreImport(QObject):
                 self.updateProgressBar()
 
         # drop edigeo raw data
-        self.dialog.subStepLabel.setText('Suppression des fichiers temporaires')
+        self.qc.updateLog('Suppression des fichiers temporaires')
         self.dropEdigeoRawData()
         self.updateTimer()
         self.updateProgressBar()
@@ -723,7 +690,7 @@ class cadastreImport(QObject):
 
 
         # Remove the temp folders
-        self.dialog.subStepLabel.setText(u'Suppression des données temporaires')
+        self.qc.updateLog(u'Suppression des données temporaires')
         self.updateProgressBar()
         tempFolderList = [
             self.ocScriptDir,
@@ -766,7 +733,6 @@ class cadastreImport(QObject):
 
         self.updateProgressBar()
         self.updateTimer()
-        QMessageBox.information(self.dialog, "Cadastre", msg)
 
 
         return None
@@ -786,22 +752,13 @@ class cadastreImport(QObject):
 
             self.qc.updateLog(u'* Copie du répertoire %s' % source)
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-
             # copy script directory
             try:
                 dir_util.copy_tree(source, target)
                 os.chmod(target, 0777)
             except IOError, e:
                 msg = u"<b>Erreur lors de la copie des scripts d'import: %s</b>" % e
-                QMessageBox.information(self.dialog,
-                "Cadastre", msg)
-                self.go = False
                 return msg
-
-            finally:
-                QApplication.restoreOverrideCursor()
-
 
         return None
 
@@ -825,7 +782,6 @@ class cadastreImport(QObject):
         and unzip all content into a single folder
         '''
         if self.go:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             self.qc.updateLog(u'* Décompression des fichiers')
 
             # get all the zip files
@@ -882,9 +838,6 @@ class cadastreImport(QObject):
                 self.qc.updateLog(msg)
                 return msg
 
-            finally:
-                QApplication.restoreOverrideCursor()
-
 
     def replaceParametersInString(self, string, replaceDict):
         '''
@@ -910,8 +863,6 @@ class cadastreImport(QObject):
 
         if self.go:
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-
             try:
                 fin = open(scriptPath)
                 data = fin.read().decode("utf-8-sig")
@@ -928,9 +879,6 @@ class cadastreImport(QObject):
                 self.qc.updateLog(msg)
                 return msg
 
-            finally:
-                QApplication.restoreOverrideCursor()
-
 
         return None
 
@@ -942,8 +890,6 @@ class cadastreImport(QObject):
         '''
 
         if self.go:
-
-            QApplication.setOverrideCursor(Qt.WaitCursor)
 
             # Read sql script
             sql = open(scriptPath).read()
@@ -1006,7 +952,6 @@ class cadastreImport(QObject):
                     if ut:
                         self.updateTimer()
                     self.updateProgressBar()
-            QApplication.restoreOverrideCursor()
 
         return None
 
@@ -1017,7 +962,6 @@ class cadastreImport(QObject):
         And commit
         '''
         if self.go:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
 
             c = None
 
@@ -1032,7 +976,6 @@ class cadastreImport(QObject):
                         self.go = False
                         self.qc.updateLog(e.msg)
                 finally:
-                    QApplication.restoreOverrideCursor()
                     if c:
                         try:
                             c.close()
@@ -1053,7 +996,6 @@ class cadastreImport(QObject):
                         self.go = False
                         self.qc.updateLog(u"<b>Erreurs rencontrées pour la requête:</b> <p>%s</p>" % sql)
                 finally:
-                    QApplication.restoreOverrideCursor()
                     if c:
                         try:
                             c.close()
@@ -1078,7 +1020,6 @@ class cadastreImport(QObject):
             initialTotalSteps = self.totalSteps
 
             # THF
-            self.dialog.subStepLabel.setText(u'Import des fichiers via ogr2ogr (*.thf)')
             self.qc.updateLog(u'  - Import des fichiers via ogr2ogr')
             thfList = self.listFilesInDirectory(self.edigeoPlainDir, 'thf')
             self.step = 0
@@ -1092,7 +1033,6 @@ class cadastreImport(QObject):
         if self.go:
 
             # VEC - import relations between objects
-            self.dialog.subStepLabel.setText(u'Import des relations (*.vec)')
             self.qc.updateLog(u'  - Import des relations (*.vec)')
             vecList = self.listFilesInDirectory(self.edigeoPlainDir, 'vec')
             self.step = 0
@@ -1111,7 +1051,6 @@ class cadastreImport(QObject):
         # Reinit progress var
         self.step = initialStep
         self.totalSteps = initialTotalSteps
-        QApplication.restoreOverrideCursor()
 
 
     def importEdigeoThfToDatabase(self, filename):
@@ -1127,7 +1066,7 @@ class cadastreImport(QObject):
 
             # Build ogr2ogr command
             conn_name = self.dialog.connectionName
-            settings = QSettings()
+            settings = QSettings('config.ini', QSettings.IniFormat)
             settings.beginGroup( u"/%s/%s" % (self.db.dbplugin().connectionSettingsKey(), conn_name) )
 
             # normalising file path
@@ -1135,8 +1074,9 @@ class cadastreImport(QObject):
             if self.dialog.dbType == 'postgis':
                 if not settings.contains( "database" ): # non-existent entry?
                     raise InvalidDataException( self.tr('There is no defined database connection "%s".') % conn_name )
-                settingsList = ["service", "host", "port", "database", "username", "password"]
-                service, host, port, database, username, password = map(lambda x: settings.value(x), settingsList)
+                settingsList = ["host", "database", "username", "password"]
+                host, database, username, password = map(lambda x: settings.value(x, type=str), settingsList)
+                port = settings.value("port", type=int)
 
                 cmdArgs = [
                     '',
