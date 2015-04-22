@@ -92,7 +92,6 @@ class cadastre_common():
         '''
         Update the combo box containing the database connection list
         '''
-        QApplication.setOverrideCursor(Qt.WaitCursor)
 
         dbType = unicode(self.dialog.liDbType.currentText()).lower()
         self.dialog.liDbConnection.clear()
@@ -121,8 +120,6 @@ class cadastre_common():
                 self.dialog.databaseSpecificOptions.setTabEnabled(0, False)
                 self.dialog.databaseSpecificOptions.setTabEnabled(1, False)
 
-        QApplication.restoreOverrideCursor()
-
 
     def toggleSchemaList(self, t):
         '''
@@ -143,7 +140,6 @@ class cadastre_common():
         '''
         self.dialog.liDbSchema.clear()
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         connectionName = unicode(self.dialog.liDbConnection.currentText())
         self.dialog.connectionName = connectionName
         dbType = unicode(self.dialog.liDbType.currentText()).lower()
@@ -182,8 +178,6 @@ class cadastre_common():
                 self.toggleSchemaList(False)
         else:
             self.toggleSchemaList(False)
-
-        QApplication.restoreOverrideCursor()
 
 
     def checkDatabaseForExistingStructure(self):
@@ -263,7 +257,6 @@ class cadastre_common():
         exists in the database
         '''
         tableExists = False
-
         if not self.dialog.db:
             return False
 
@@ -410,7 +403,6 @@ class cadastre_common():
         Execute a SQL query and
         return [header, data, rowCount]
         '''
-        QApplication.setOverrideCursor(Qt.WaitCursor)
 
         data = []
         header = []
@@ -444,7 +436,6 @@ class cadastre_common():
             return
 
         finally:
-            QApplication.restoreOverrideCursor()
             if c:
                 c.close()
                 del c
@@ -791,14 +782,10 @@ class cadastre_import_cli(QObject):
 
 
     def createSchema(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        try:
-            if self.db == None:
-                print "No database selected or you are not connected to it."
-                return
-            schema = self.inDbCreateSchema.text()
-        finally:
-            QApplication.restoreOverrideCursor()
+        if self.db == None:
+            print "No database selected or you are not connected to it."
+            return
+        schema = self.inDbCreateSchema.text()
 
         if schema:
             try:
@@ -815,7 +802,6 @@ class cadastre_import_cli(QObject):
                 listDic = { self.schemaList[i]:i for i in range(0, len(self.schemaList)) }
                 self.liDbSchema.setCurrentIndex(listDic[schema])
                 self.inDbCreateSchema.clear()
-                QApplication.restoreOverrideCursor()
 
 
     def chooseProjection(self, key):
