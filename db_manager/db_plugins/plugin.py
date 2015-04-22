@@ -23,7 +23,6 @@ email                : brush.tyler@gmail.com
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from qgis.gui import QgsMessageBar
 from ..db_plugins import createDbPlugin
 from .html_elems import HtmlParagraph, HtmlTable
 
