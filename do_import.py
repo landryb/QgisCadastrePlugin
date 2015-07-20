@@ -718,7 +718,10 @@ class cadastre_import_cli(QObject):
 
         # set input values from settings
 
-        s = QSettings('config.ini', QSettings.IniFormat)
+        cfg = os.getenv('QADASTRECFG','config.ini')
+        s = QSettings(cfg, QSettings.IniFormat)
+        print "Using this config file for import parameters: "+cfg
+
         self.majicSourceFileNames = [
             {'key': '[FICHIER_BATI]',
                 'value': str(s.value("cadastre/batiFileName", 'REVBATI.800', type=str)),
@@ -829,7 +832,7 @@ class cadastre_import_cli(QObject):
         Check the user defined inpu data
         '''
 
-        s = QSettings('config.ini', QSettings.IniFormat)
+        s = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.IniFormat)
         self.dataVersion = str(s.value('cadastre/dataVersion', '2014', type=str))
         self.dataYear = str(s.value('cadastre/dataYear','2014', type=str))
         self.schema = str(s.value('cadastre/schema','public', type=str))
