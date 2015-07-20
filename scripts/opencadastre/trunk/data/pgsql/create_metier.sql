@@ -1,9 +1,9 @@
-﻿CREATE TABLE bati (tmp character varying(550));
-CREATE TABLE fanr (tmp character varying(550));
-CREATE TABLE lloc (tmp character varying(550));
-CREATE TABLE nbat (tmp character varying(550));
-CREATE TABLE pdll (tmp character varying(550));
-CREATE TABLE prop (tmp character varying(550));
+﻿CREATE TABLE bati (tmp character varying(750));
+CREATE TABLE fanr (tmp character varying(750));
+CREATE TABLE lloc (tmp character varying(750));
+CREATE TABLE nbat (tmp character varying(750));
+CREATE TABLE pdll (tmp character varying(750));
+CREATE TABLE prop (tmp character varying(750));
 
 CREATE TABLE parcelle (
     parcelle character varying(19),
