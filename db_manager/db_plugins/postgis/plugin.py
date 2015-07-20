@@ -20,6 +20,7 @@ email                : brush.tyler@gmail.com
  ***************************************************************************/
 """
 
+import os
 # this will disable the dbplugin if the connector raise an ImportError
 from .connector import PostGisDBConnector
 
@@ -68,7 +69,7 @@ class PostGisDBPlugin(DBPlugin):
 
 	def connect(self, parent=None):
 		conn_name = self.connectionName()
-		settings = QSettings('config.ini', QSettings.IniFormat)
+		settings = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.IniFormat)
 		settings.beginGroup( u"/%s/%s" % (self.connectionSettingsKey(), conn_name) )
 
 		if not settings.contains( "database" ): # non-existent entry?
