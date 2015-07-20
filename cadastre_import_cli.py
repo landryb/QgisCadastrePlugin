@@ -972,9 +972,8 @@ class cadastreImport(QObject):
                     if not ignoreError \
                     and not re.search(r'ADD COLUMN tempo_import', sql, re.IGNORECASE) \
                     and not re.search(r'CREATE INDEX ', sql, re.IGNORECASE):
-                        DlgDbError.showError(e, self.dialog)
-                        self.go = False
                         self.qc.updateLog(e.msg)
+                        print e.msg
                 finally:
                     if c:
                         try:
