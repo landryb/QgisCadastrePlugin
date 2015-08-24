@@ -1,9 +1,9 @@
-﻿CREATE TABLE bati (tmp character varying(750));
-CREATE TABLE fanr (tmp character varying(750));
-CREATE TABLE lloc (tmp character varying(750));
-CREATE TABLE nbat (tmp character varying(750));
-CREATE TABLE pdll (tmp character varying(750));
-CREATE TABLE prop (tmp character varying(750));
+﻿CREATE TABLE bati (tmp character varying(550));
+CREATE TABLE fanr (tmp character varying(550));
+CREATE TABLE lloc (tmp character varying(550));
+CREATE TABLE nbat (tmp character varying(550));
+CREATE TABLE pdll (tmp character varying(550));
+CREATE TABLE prop (tmp character varying);
 
 CREATE TABLE parcelle (
     parcelle character varying(19),
@@ -499,6 +499,8 @@ CREATE TABLE proprietaire (
     jantfc character varying (4),
     jantbc character varying (4),
     dformjur character varying (4),
+    dnomus character varying,
+    dprnus character varying,
     lot character varying
 );
 
@@ -605,6 +607,16 @@ CREATE TABLE lotslocaux (
     lot character varying
 );
 
+CREATE TABLE commune_majic(
+    commune character varying (10),
+    annee character varying (4),
+    ccodep character varying (2),
+    ccodir character varying (1),
+    ccocom character varying (3),
+    libcom character varying (50),
+    lot character varying
+);
+
 CREATE TABLE commune (
     commune character varying (10),
     annee character varying (4),
@@ -660,43 +672,43 @@ CREATE TABLE voie (
     lot character varying
 );
 
-
-CREATE TABLE gpdl (gpdl character varying(1) primary key,gpdl_lib character varying(150));
-CREATE TABLE gnexps (gnexps character varying (2) primary key,gnexps_lib character varying (150));
-CREATE TABLE cgrnum ( cgrnum character varying (2) primary key,cgrnum_lib character varying (150));
-CREATE TABLE dsgrpf (dsgrpf character varying(2) primary key, dsgrpf_lib character varying(150));
-CREATE TABLE cnatsp (cnatsp character varying(5) primary key, cnatsp_lib character varying(150));
-CREATE TABLE ccolloc (ccolloc character varying(2) primary key, ccolloc_lib character varying(150));
-CREATE TABLE gnexts (gnexts character varying(2) primary key, gnexts_lib character varying(150));
-CREATE TABLE ccoeva (ccoeva character varying(1) primary key, ccoeva_lib character varying(150));
-CREATE TABLE dteloc (dteloc character varying(1) primary key, dteloc_lib character varying(150));
-CREATE TABLE ccoplc (ccoplc character varying(1) primary key, ccoplc_lib character varying(150));
-CREATE TABLE cconlc (cconlc character varying(2) primary key, cconlc_lib character varying(150));
-CREATE TABLE top48a (top48a character varying(1) primary key, top48a_lib character varying(150));
-CREATE TABLE dnatlc (dnatlc character varying(1) primary key, dnatlc_lib character varying(150));
-CREATE TABLE hlmsem (hlmsem character varying(1) primary key, hlmsem_lib character varying(150));
-CREATE TABLE ccoaff (ccoaff character varying(1) primary key, ccoaff_lib character varying(150));
-CREATE TABLE gnexpl (gnexpl character varying(2) primary key, gnexpl_lib character varying(150));
-CREATE TABLE gnextl (gnextl character varying(2) primary key, gnextl_lib character varying(150));
-CREATE TABLE cconad (cconad character varying(2) primary key, cconad_lib character varying(150));
-CREATE TABLE ctpdl (ctpdl character varying(3) primary key, ctpdl_lib character varying(150));
-CREATE TABLE cconlo (cconlo character varying(1) primary key, cconlo_lib character varying(150));
-CREATE TABLE ccodro (ccodro character varying(1) primary key, ccodro_lib character varying(150));
-CREATE TABLE ccodem (ccodem character varying(1) primary key, ccodem_lib character varying(150));
-CREATE TABLE gtoper (gtoper character varying(1) primary key, gtoper_lib character varying(150));
-CREATE TABLE ccoqua (ccoqua character varying(1) primary key, ccoqua_lib character varying(150));
-CREATE TABLE dnatpr (dnatpr character varying(3) primary key, dnatpr_lib character varying(150));
-CREATE TABLE ccogrm (ccogrm character varying(2) primary key, ccogrm_lib character varying(150));
-CREATE TABLE gtyp3 (gtyp3 character varying(1) primary key, gtyp3_lib character varying(150));
-CREATE TABLE gtyp4 (gtyp4 character varying(1) primary key, gtyp4_lib character varying(150));
-CREATE TABLE gtyp5 (gtyp5 character varying(1) primary key, gtyp5_lib character varying(150));
-CREATE TABLE gtyp6 (gtyp6 character varying(1) primary key, gtyp6_lib character varying(150));
-CREATE TABLE typcom (typcom character varying(1) primary key, typcom_lib character varying(150));
-CREATE TABLE natvoiriv (natvoiriv character varying(1) primary key, natvoiriv_lib character varying(150));
-CREATE TABLE carvoi (carvoi character varying(1) primary key, carvoi_lib character varying(150));
-CREATE TABLE annul (annul character varying(1) primary key, annul_lib character varying(150));
-CREATE TABLE typvoi (typvoi character varying(1) primary key, typvoi_lib character varying(150));
-CREATE TABLE indldnbat (indldnbat character varying(1) primary key, indldnbat_lib character varying(150));
+-- Tables de nomenclature
+CREATE TABLE gpdl (gpdl character varying(1) primary key,gpdl_lib character varying);
+CREATE TABLE gnexps (gnexps character varying (2) primary key,gnexps_lib character varying );
+CREATE TABLE cgrnum ( cgrnum character varying (2) primary key,cgrnum_lib character varying );
+CREATE TABLE dsgrpf (dsgrpf character varying(2) primary key, dsgrpf_lib character varying);
+CREATE TABLE cnatsp (cnatsp character varying(5) primary key, cnatsp_lib character varying);
+CREATE TABLE ccolloc (ccolloc character varying(2) primary key, ccolloc_lib character varying);
+CREATE TABLE gnexts (gnexts character varying(2) primary key, gnexts_lib character varying);
+CREATE TABLE ccoeva (ccoeva character varying(1) primary key, ccoeva_lib character varying);
+CREATE TABLE dteloc (dteloc character varying(1) primary key, dteloc_lib character varying);
+CREATE TABLE ccoplc (ccoplc character varying(1) primary key, ccoplc_lib character varying);
+CREATE TABLE cconlc (cconlc character varying(2) primary key, cconlc_lib character varying);
+CREATE TABLE top48a (top48a character varying(1) primary key, top48a_lib character varying);
+CREATE TABLE dnatlc (dnatlc character varying(1) primary key, dnatlc_lib character varying);
+CREATE TABLE hlmsem (hlmsem character varying(1) primary key, hlmsem_lib character varying);
+CREATE TABLE ccoaff (ccoaff character varying(1) primary key, ccoaff_lib character varying);
+CREATE TABLE gnexpl (gnexpl character varying(2) primary key, gnexpl_lib character varying);
+CREATE TABLE gnextl (gnextl character varying(2) primary key, gnextl_lib character varying);
+CREATE TABLE cconad (cconad character varying(2) primary key, cconad_lib character varying);
+CREATE TABLE ctpdl (ctpdl character varying(3) primary key, ctpdl_lib character varying);
+CREATE TABLE cconlo (cconlo character varying(1) primary key, cconlo_lib character varying);
+CREATE TABLE ccodro (ccodro character varying(1) primary key, ccodro_lib character varying);
+CREATE TABLE ccodem (ccodem character varying(1) primary key, ccodem_lib character varying);
+CREATE TABLE gtoper (gtoper character varying(1) primary key, gtoper_lib character varying);
+CREATE TABLE ccoqua (ccoqua character varying(1) primary key, ccoqua_lib character varying);
+CREATE TABLE dnatpr (dnatpr character varying(3) primary key, dnatpr_lib character varying);
+CREATE TABLE ccogrm (ccogrm character varying(2) primary key, ccogrm_lib character varying);
+CREATE TABLE gtyp3 (gtyp3 character varying(1) primary key, gtyp3_lib character varying);
+CREATE TABLE gtyp4 (gtyp4 character varying(1) primary key, gtyp4_lib character varying);
+CREATE TABLE gtyp5 (gtyp5 character varying(1) primary key, gtyp5_lib character varying);
+CREATE TABLE gtyp6 (gtyp6 character varying(1) primary key, gtyp6_lib character varying);
+CREATE TABLE typcom (typcom character varying(1) primary key, typcom_lib character varying);
+CREATE TABLE natvoiriv (natvoiriv character varying(1) primary key, natvoiriv_lib character varying);
+CREATE TABLE carvoi (carvoi character varying(1) primary key, carvoi_lib character varying);
+CREATE TABLE annul (annul character varying(1) primary key, annul_lib character varying);
+CREATE TABLE typvoi (typvoi character varying(1) primary key, typvoi_lib character varying);
+CREATE TABLE indldnbat (indldnbat character varying(1) primary key, indldnbat_lib character varying);
 CREATE TABLE dformjur (dformjur character varying(4) primary key, formjur text, libformjur text);
 
 CREATE TABLE geo_commune
@@ -905,6 +917,19 @@ CREATE TABLE geo_tronfluv
   lot character varying
 );
 SELECT AddGeometryColumn ( current_schema::text, 'geo_tronfluv', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+
+
+CREATE TABLE geo_tronroute
+(
+  geo_tronroute serial NOT NULL,
+  annee character varying(4) NOT NULL,
+  object_rid character varying(80),
+  tex character varying,
+  creat_date date,
+  update_dat date,
+  lot character varying
+);
+SELECT AddGeometryColumn ( current_schema::text, 'geo_tronroute', 'geom', 2154 , 'MULTIPOLYGON', 2 );
 
 
 CREATE TABLE geo_can (geo_can character varying(2),geo_can_lib character varying(150));
@@ -1518,6 +1543,8 @@ COMMENT ON COLUMN proprietaire.jandge IS 'année d’entrée à la DGE - INDISPO
 COMMENT ON COLUMN proprietaire.jantfc IS 'année d’entrée paiement TF - INDISPONIBLE';
 COMMENT ON COLUMN proprietaire.jantbc IS 'année d’entrée paiement TSBCS - INDISPONIBLE';
 COMMENT ON COLUMN proprietaire.dformjur IS 'Forme juridique (Depuis 2013)';
+COMMENT ON COLUMN proprietaire.dnomus IS 'Nom d''usage (Depuis 2015)';
+COMMENT ON COLUMN proprietaire.dprnus IS 'Prénom d''usage (Depuis 2015)';
 COMMENT ON TABLE pdl IS 'Propriétés divisées en lots';
 COMMENT ON COLUMN pdl.ccodep IS 'code département - ';
 COMMENT ON COLUMN pdl.ccodir IS 'code direction - ';
@@ -1598,6 +1625,13 @@ COMMENT ON COLUMN commune.codvoi IS 'Code identifiant la voie dans MAJIC2. - Per
 COMMENT ON COLUMN commune.typvoi IS 'Type de voie - Indicateur de la classe de la voie. - 1 - voie, 2 - ensemble immobilier, 3 - lieu-dit, 4 -  pseudo-voie, 5 - voie provisoire.';
 COMMENT ON COLUMN commune.indldnbat IS 'Indicateur lieu-dit non bâti - Zone servie uniquement pour les lieux-dits.Permet d’indiquer si le lieu-dit comporte ou non un bâtiment dans MAJIC.1 pour lieu-dit non bâti, 0 sinon.';
 COMMENT ON COLUMN commune.motclas IS 'Mot classant - Dernier mot entièrement alphabétique du libellé de voie - Permet de restituer l''ordre alphabétique.';
+
+COMMENT ON TABLE commune_majic IS 'Commune (MAJIC - introduit depuis le millésime 2015). Cet article contient le code INSEE associé au libellé de la commune.';
+COMMENT ON COLUMN commune_majic.ccodep IS 'Code département - Code département INSEE';
+COMMENT ON COLUMN commune_majic.ccodir IS 'Code direction - Code direction dge';
+COMMENT ON COLUMN commune_majic.ccocom IS 'Code commune - 3 caractères';
+COMMENT ON COLUMN commune_majic.libcom IS 'Libellé de la commune';
+
 COMMENT ON TABLE voie IS 'Voie (Fantoir)';
 COMMENT ON COLUMN voie.ccodep IS 'Code département - Code département INSEE';
 COMMENT ON COLUMN voie.ccodir IS 'Code direction - Code direction dge';
@@ -1727,6 +1761,7 @@ COMMENT ON COLUMN geo_zoncommuni.object_rid IS 'Numéro d''objet';
 COMMENT ON COLUMN geo_zoncommuni.tex IS 'Nom de la voie';
 COMMENT ON COLUMN geo_zoncommuni.creat_date IS 'Date de création';
 COMMENT ON COLUMN geo_zoncommuni.update_dat IS 'Date de dernière modification';
+
 COMMENT ON TABLE geo_tronfluv IS 'Élément surfacique (fermé) utilisé pour tous les cours d''eau et les rivages de mers. Un libellé y est associé.';
 COMMENT ON COLUMN geo_tronfluv.geo_tronfluv IS 'Identifiant';
 COMMENT ON COLUMN geo_tronfluv.annee IS 'Année';
@@ -1734,6 +1769,14 @@ COMMENT ON COLUMN geo_tronfluv.object_rid IS 'Numéro d''objet';
 COMMENT ON COLUMN geo_tronfluv.tex IS 'Nom du cours d''eau';
 COMMENT ON COLUMN geo_tronfluv.creat_date IS 'Date de création';
 COMMENT ON COLUMN geo_tronfluv.update_dat IS 'Date de dernière modification';
+
+COMMENT ON TABLE geo_tronroute IS 'Élément surfacique (fermé) utilisé pour tous les tronçons de routes. Un libellé y est associé.';
+COMMENT ON COLUMN geo_tronroute.geo_tronroute IS 'Identifiant';
+COMMENT ON COLUMN geo_tronroute.annee IS 'Année';
+COMMENT ON COLUMN geo_tronroute.object_rid IS 'Numéro d''objet';
+COMMENT ON COLUMN geo_tronroute.tex IS 'Nom du cours d''eau';
+COMMENT ON COLUMN geo_tronroute.creat_date IS 'Date de création';
+COMMENT ON COLUMN geo_tronroute.update_dat IS 'Date de dernière modification';
 
 COMMENT ON TABLE geo_ptcanv IS 'Objet ponctuel servant d''appui aux opérations de lever des plans..';
 COMMENT ON COLUMN geo_ptcanv.geo_ptcanv IS 'Identifiant';

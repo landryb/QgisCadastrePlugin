@@ -20,6 +20,7 @@ ALTER TABLE [PREFIXE]parcellecomposante ADD CONSTRAINT parcellecomposante_pk PRI
 ALTER TABLE [PREFIXE]lots ADD CONSTRAINT lots_pk PRIMARY KEY  (lots);
 ALTER TABLE [PREFIXE]lotslocaux ADD CONSTRAINT loclocaux_pk PRIMARY KEY  (lotslocaux);
 ALTER TABLE [PREFIXE]commune ADD CONSTRAINT commune_pk PRIMARY KEY  (commune);
+ALTER TABLE [PREFIXE]commune_majic ADD CONSTRAINT commune_majic_pk PRIMARY KEY  (commune);
 ALTER TABLE [PREFIXE]voie ADD CONSTRAINT voie_pk PRIMARY KEY  (voie);
 ALTER TABLE [PREFIXE]geo_commune ADD CONSTRAINT geo_commune_pk PRIMARY KEY (ogc_fid);
 ALTER TABLE [PREFIXE]geo_section ADD CONSTRAINT geo_section_pk PRIMARY KEY (ogc_fid);
@@ -35,6 +36,7 @@ ALTER TABLE [PREFIXE]geo_batiment ADD CONSTRAINT geo_batiment_pk PRIMARY KEY (ge
 ALTER TABLE [PREFIXE]geo_batiment_parcelle ADD CONSTRAINT geo_batiment_parcelle_pk PRIMARY KEY (geo_batiment_parcelle );
 ALTER TABLE [PREFIXE]geo_zoncommuni ADD CONSTRAINT geo_zoncommuni_pk PRIMARY KEY (geo_zoncommuni );
 ALTER TABLE [PREFIXE]geo_tronfluv ADD CONSTRAINT geo_tronfluv_pk PRIMARY KEY (geo_tronfluv );
+ALTER TABLE [PREFIXE]geo_tronroute ADD CONSTRAINT geo_tronroute_pk PRIMARY KEY (geo_tronroute );
 ALTER TABLE [PREFIXE]geo_ptcanv ADD CONSTRAINT geo_ptcanv_pk PRIMARY KEY (geo_ptcanv );
 ALTER TABLE [PREFIXE]geo_borne ADD CONSTRAINT geo_borne_pk PRIMARY KEY (geo_borne);
 ALTER TABLE [PREFIXE]geo_borne_parcelle ADD CONSTRAINT geo_borne_parcelle_pk PRIMARY KEY (geo_borne_parcelle );
