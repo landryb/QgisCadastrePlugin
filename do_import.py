@@ -835,7 +835,6 @@ class cadastre_import_cli(QObject):
         s = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.IniFormat)
         self.dataVersion = str(s.value('cadastre/dataVersion', '2014', type=str))
         self.dataYear = str(s.value('cadastre/dataYear','2014', type=str))
-        self.schema = str(s.value('cadastre/schema','public', type=str))
         self.majicSourceDir = str(s.value('cadastre/majicSourceDir','/tmp/qadastre/majic', type=str))
         self.edigeoSourceDir = str(s.value('cadastre/edigeoSourceDir','/tmp/qadastre/edigeo', type=str))
         self.edigeoDepartement = str(s.value('cadastre/edigeoDepartement','xx', type=str))
@@ -844,6 +843,7 @@ class cadastre_import_cli(QObject):
         self.edigeoSourceProj = str(s.value('cadastre/edigeoSourceProj','EPSG:2154', type=str))
         self.edigeoTargetProj = str(s.value('cadastre/edigeoTargetProj','EPSG:2154', type=str))
         self.connectionName = str(s.value('PostgreSQL/connections/selected','qadastre', type=str))
+        self.schema = str(s.value('PostgreSQL/connections/%s/schema' % self.connectionName,'public', type=str))
         self.dbType = u'postgis'
 
         # defined properties
