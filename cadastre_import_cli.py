@@ -205,16 +205,6 @@ class cadastreImport(QObject):
             }
         ]
 
-        #~ scriptList.append(
-            #~ {
-                #~ 'title' : u'Ajout des contraintes',
-                #~ 'script': '%s' % os.path.normpath(os.path.join(self.ocScriptDir,
-                #~ 'COMMUN/creation_contraintes.sql')),
-                #~ 'constraints': True,
-                #~ 'divide': True
-            #~ }
-        #~ )
-
         for item in scriptList:
             if self.go:
                 s = item['script']
@@ -227,6 +217,37 @@ class cadastreImport(QObject):
             self.updateProgressBar()
 
         self.updateTimer()
+
+
+    def updateCadastreStructure(self):
+        '''
+        Add some tables if they do not exists
+        This method is run only if structure already exists
+        and if each table is not already present
+        '''
+        # List all the tables which have been created between plugin versions
+        newTables = [
+            'geo_tronroute',
+            'commune_majic'
+        ]
+
+        # Replace dictionnary
+        replaceDict = self.replaceDict.copy()
+        replaceDict['2154'] = self.targetSrid
+
+        # Run the table creation scripts
+        for table in newTables:
+            # Check if table already exists
+            if self.qc.checkDatabaseForExistingTable(table, self.dialog.schema):
+                continue
+            # Build path the the SQL creation file and continue if it does not exists
+            s = '%s' % os.path.join(self.pScriptDir, 'update/create_%s.sql' % table)
+            if not os.path.exists(s):
+                continue
+            self.replaceParametersInScript(s, replaceDict)
+            self.executeSqlScript(s, False)
+
+
 
 
     def importMajic(self):
@@ -1225,6 +1246,7 @@ class cadastreImport(QObject):
             'subdfisc_id': 'geo_subdfisc',
             'subdsect_id': 'geo_subdsect',
             'tronfluv_id': 'geo_tronfluv',
+            'tronroute_id': 'geo_tronroute',
             'tsurf_id': 'geo_tsurf'
         }
 
