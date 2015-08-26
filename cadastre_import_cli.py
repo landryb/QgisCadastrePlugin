@@ -1023,7 +1023,9 @@ class cadastreImport(QObject):
             thfList = self.listFilesInDirectory(self.edigeoPlainDir, 'thf')
             self.step = 0
             self.totalSteps = len(thfList)
+            print "%s files to go" % self.totalSteps
             for thf in thfList:
+                print "importing thf %s" % thf
                 self.importEdigeoThfToDatabase(thf)
                 self.updateProgressBar()
                 if not self.go:
@@ -1036,7 +1038,9 @@ class cadastreImport(QObject):
             vecList = self.listFilesInDirectory(self.edigeoPlainDir, 'vec')
             self.step = 0
             self.totalSteps = len(vecList)
+            print "%s files to go" % self.totalSteps
             for vec in vecList:
+                print "importing vec %s" % vec
                 # import via ogr2ogr
                 self.importEdigeoVecToDatabase(vec)
                 # update mission multipolygons (ogr2ogr driver does not handle them yet)
