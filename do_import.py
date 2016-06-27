@@ -722,40 +722,6 @@ class cadastre_import_cli(QObject):
         s = QSettings(cfg, QSettings.IniFormat)
         print "Using this config file for import parameters: "+cfg
 
-        self.majicSourceFileNames = [
-            {'key': '[FICHIER_BATI]',
-                'value': str(s.value("cadastre/batiFileName", 'REVBATI.800', type=str)),
-                'table': 'bati',
-                'required': True
-            },
-            {'key': '[FICHIER_FANTOIR]',
-                'value': str(s.value("cadastre/fantoirFileName", 'TOPFANR.800', type=str)),
-                'table': 'fanr',
-                'required': False
-            },
-            {'key': '[FICHIER_LOTLOCAL]',
-                'value': str(s.value("cadastre/lotlocalFileName", 'REVD166.800', type=str)),
-                'table': 'lloc',
-                'required': False
-            },
-            {'key': '[FICHIER_NBATI]',
-                'value': str(s.value("cadastre/nbatiFileName", 'REVNBAT.800', type=str)),
-                'table': 'nbat',
-                'required': True
-            },
-            {'key': '[FICHIER_PDL]',
-                'value': str(s.value("cadastre/pdlFileName", 'REVFPDL.800', type=str)),
-                'table': 'pdll',
-                'required': False
-            },
-            {'key': '[FICHIER_PROP]',
-                'value': str(s.value("cadastre/propFileName", 'REVPROP.800', type=str)),
-                'table': 'prop',
-                'required': True
-            }
-        ]
-
-
     def onClose(self):
         '''
         Close dialog
