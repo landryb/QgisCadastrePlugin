@@ -173,7 +173,16 @@ class cadastre_common():
                 DlgDbError.showError(e, self.dialog)
                 self.dialog.go = False
                 self.updateLog(e.msg)
+                QApplication.restoreOverrideCursor()
                 return
+            except:
+                self.dialog.go = False
+                msg = u"Impossible de récupérer les schémas de la base. Vérifier les informations de connexion."
+                self.updateLog(msg)
+                QApplication.restoreOverrideCursor()
+                return
+            finally:
+                QApplication.restoreOverrideCursor()
 
         if connection:
             self.dialog.connection = connection
@@ -296,13 +305,12 @@ class cadastre_common():
         corresponding to a database
         table name (postgis or sqlite)
         '''
-
         layer = None
         layers = self.dialog.iface.legendInterface().layers()
         for l in layers:
             if not hasattr(l, 'providerType'):
                 continue
-            if not l.type() == QgsMapLayer.VectorLayer:
+            if hasattr(l, 'type') and l.type() != 0:
                 continue
             if not l.providerType() in (u'postgres', u'spatialite'):
                 continue
@@ -849,40 +857,6 @@ class cadastre_import_dialog(QDialog, Ui_cadastre_import_form):
         }
         self.getValuesFromSettings()
 
-        s = QSettings()
-        self.majicSourceFileNames = [
-            {'key': '[FICHIER_BATI]',
-                'value': s.value("cadastre/batiFileName", 'REVBATI.800', type=str),
-                'table': 'bati',
-                'required': True
-            },
-            {'key': '[FICHIER_FANTOIR]',
-                'value': s.value("cadastre/fantoirFileName", 'TOPFANR.800', type=str),
-                'table': 'fanr',
-                'required': False
-            },
-            {'key': '[FICHIER_LOTLOCAL]',
-                'value': s.value("cadastre/lotlocalFileName", 'REVD166.800', type=str),
-                'table': 'lloc',
-                'required': False
-            },
-            {'key': '[FICHIER_NBATI]',
-                'value': s.value("cadastre/nbatiFileName", 'REVNBAT.800', type=str),
-                'table': 'nbat',
-                'required': True
-            },
-            {'key': '[FICHIER_PDL]',
-                'value': s.value("cadastre/pdlFileName", 'REVFPDL.800', type=str),
-                'table': 'pdll',
-                'required': False
-            },
-            {'key': '[FICHIER_PROP]',
-                'value': s.value("cadastre/propFileName", 'REVPROP.800', type=str),
-                'table': 'prop',
-                'required': True
-            }
-        ]
-
 
     def onClose(self):
         '''
@@ -1044,7 +1018,7 @@ class cadastre_import_dialog(QDialog, Ui_cadastre_import_form):
 
         # Run Script for creating tables
         if not self.hasStructure:
-            qi.installOpencadastreStructure()
+            qi.installCadastreStructure()
         else:
             # Run update script which add some missing tables when needed
             qi.updateCadastreStructure()
@@ -1218,7 +1192,7 @@ class cadastre_search_dialog(QDockWidget, Ui_cadastre_search_form):
                 'table': 'geo_commune', 'geomCol': 'geom', 'sql': '',
                 'layer': None,
                 'request': None,
-                'attributes': ['ogc_fid','tex2','idu','geo_commune','geom'],
+                'attributes': ['ogc_fid','tex2','idu','geo_commune','geom', 'lot'],
                 'orderBy': ['tex2'],
                 'features': None,
                 'chosenFeature': None,
@@ -1235,7 +1209,7 @@ class cadastre_search_dialog(QDockWidget, Ui_cadastre_search_form):
                 'table': 'geo_section', 'geomCol': 'geom', 'sql': '',
                 'layer': None,
                 'request': None,
-                'attributes': ['ogc_fid','tex','idu','geo_commune','geo_section','geom'],
+                'attributes': ['ogc_fid','tex','idu','geo_commune','geo_section','geom','lot'],
                 'orderBy': ['geo_section'],
                 'features': None,
                 'chosenFeature': None,
@@ -1614,7 +1588,7 @@ class cadastre_search_dialog(QDockWidget, Ui_cadastre_search_form):
         if self.dbType == 'postgis':
             sql = self.qc.setSearchPath(sql, connectionParams['schema'])
         # Get data
-        #~ self.qc.updateLog(sql)
+        #self.qc.updateLog(sql)
         [header, data, rowCount] = self.qc.fetchDataFromSqlQuery(connector, sql)
 
         # Get features
@@ -1835,7 +1809,7 @@ class cadastre_search_dialog(QDockWidget, Ui_cadastre_search_form):
             ckey = item['child']['key']
             fkey = item['child']['fkey']
             if feature:
-                filterExpression = "%s = '%s'" % (fkey, feature[fkey])
+                filterExpression = "%s = '%s' AND lot = '%s'" % (fkey, feature[fkey], feature['lot'])
                 self.setupSearchCombobox(ckey, filterExpression, 'sql')
             else:
                 if item['child']['getIfNoFeature']:

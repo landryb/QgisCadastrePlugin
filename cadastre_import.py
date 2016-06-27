@@ -66,7 +66,6 @@ class cadastreImport(QObject):
 
         self.db = self.dialog.db
         self.connector = self.db.connector
-        self.ocScriptSourceDir = os.path.join(self.qc.plugin_dir, "scripts/opencadastre/trunk/data/pgsql")
         self.pScriptSourceDir = os.path.join(self.qc.plugin_dir, 'scripts/plugin')
 
         # projections
@@ -81,12 +80,8 @@ class cadastreImport(QObject):
         # create temporary directories
         s = QSettings()
         tempDir = s.value("cadastre/tempDir", '%s' % tempfile.gettempdir(), type=str)
-        self.ocScriptDir = tempfile.mkdtemp('', 'cad_oc_script_', tempDir)
         self.pScriptDir = tempfile.mkdtemp('', 'cad_p_script_', tempDir)
-        self.edigeoDir = tempfile.mkdtemp('', 'cad_edigeo_source_', tempDir)
         self.edigeoPlainDir = tempfile.mkdtemp('', 'cad_edigeo_plain_', tempDir)
-        self.majicDir = tempfile.mkdtemp('', 'cad_majic_source_', tempDir)
-        os.chmod(self.majicDir, 0o755)
         self.replaceDict = {
             '[VERSION]' : self.dialog.dataVersion,
             '[ANNEE]' : self.dialog.dataYear,
@@ -96,6 +91,41 @@ class cadastreImport(QObject):
         self.spatialiteTempStore = s.value("cadastre/spatialiteTempStore", 'MEMORY', type=str)
 
         self.geoTableList = ['geo_zoncommuni', 'geo_ptcanv', 'geo_commune', 'geo_parcelle', 'geo_symblim', 'geo_tronfluv', 'geo_tronroute', 'geo_label', 'geo_subdsect', 'geo_batiment', 'geo_borne', 'geo_croix', 'geo_tpoint', 'geo_lieudit', 'geo_section', 'geo_subdfisc', 'geo_tsurf', 'geo_tline', 'geo_unite_fonciere']
+
+        s = QSettings()
+        self.majicSourceFileNames = [
+            {'key': '[FICHIER_BATI]',
+                'value': s.value("cadastre/batiFileName", 'REVBATI.800', type=str),
+                'table': 'bati',
+                'required': True
+            },
+            {'key': '[FICHIER_FANTOIR]',
+                'value': s.value("cadastre/fantoirFileName", 'TOPFANR.800', type=str),
+                'table': 'fanr',
+                'required': True
+            },
+            {'key': '[FICHIER_LOTLOCAL]',
+                'value': s.value("cadastre/lotlocalFileName", 'REVD166.800', type=str),
+                'table': 'lloc',
+                'required': False
+            },
+            {'key': '[FICHIER_NBATI]',
+                'value': s.value("cadastre/nbatiFileName", 'REVNBAT.800', type=str),
+                'table': 'nbat',
+                'required': True
+            },
+            {'key': '[FICHIER_PDL]',
+                'value': s.value("cadastre/pdlFileName", 'REVFPDL.800', type=str),
+                'table': 'pdll',
+                'required': False
+            },
+            {'key': '[FICHIER_PROP]',
+                'value': s.value("cadastre/propFileName", 'REVPROP.800', type=str),
+                'table': 'prop',
+                'required': True
+            }
+        ]
+
 
 
         if self.dialog.dbType == 'postgis':
@@ -167,15 +197,14 @@ class cadastreImport(QObject):
 
         self.executeSqlQuery(sql)
 
-        # copy opencadastre script files to temporary dir
+        # copy SQL script files to temporary dir
         self.updateProgressBar()
-        self.copyFilesToTemp(self.ocScriptSourceDir, self.ocScriptDir)
         self.copyFilesToTemp(self.pScriptSourceDir, self.pScriptDir)
         self.updateTimer()
         self.updateProgressBar()
 
 
-    def installOpencadastreStructure(self):
+    def installCadastreStructure(self):
         '''
         Create the empty db structure
         '''
@@ -194,11 +223,11 @@ class cadastreImport(QObject):
         # laissées suite à bug par exemple
         self.dropEdigeoRawData()
 
-        # install opencadastre structure
+        # install cadastre structure
         scriptList = [
             {
                 'title' : u'Création des tables',
-                'script': '%s' % os.path.join(self.ocScriptDir, 'create_metier.sql')
+                'script': '%s' % os.path.join(self.pScriptDir, 'commun_create_metier.sql')
             },
             {
                 'title': u'Création des tables edigeo',
@@ -206,7 +235,7 @@ class cadastreImport(QObject):
             },
             {
                 'title' : u'Ajout de la nomenclature',
-                'script': '%s' % os.path.join(self.ocScriptDir, 'insert_nomenclatures.sql')
+                'script': '%s' % os.path.join(self.pScriptDir, 'commun_insert_nomenclatures.sql')
             }
         ]
 
@@ -271,7 +300,7 @@ class cadastreImport(QObject):
         scriptList.append(
             {
             'title' : u'Suppression des contraintes',
-            'script' : os.path.join(self.ocScriptDir, 'COMMUN/suppression_constraintes.sql'),
+            'script' : os.path.join(self.pScriptDir, 'commun_suppression_contraintes.sql'),
             'constraints': False,
             'divide': True
             }
@@ -282,13 +311,13 @@ class cadastreImport(QObject):
             scriptList.append(
                 {
                 'title' : u'Purge des données MAJIC',
-                'script' : os.path.join(self.ocScriptDir, 'COMMUN/majic3_purge_donnees.sql')
+                'script' : os.path.join(self.pScriptDir, 'majic3_purge_donnees.sql')
                 }
             )
             scriptList.append(
                 {
                 'title' : u'Purge des données brutes',
-                'script' : os.path.join(self.ocScriptDir, 'COMMUN/majic3_purge_donnees_brutes.sql')
+                'script' : os.path.join(self.pScriptDir, 'majic3_purge_donnees_brutes.sql')
                 }
             )
 
@@ -296,7 +325,7 @@ class cadastreImport(QObject):
         scriptList.append(
             {
             'title' : u'Suppression des indexes',
-            'script' : os.path.join(self.pScriptDir, 'majic_drop_indexes.sql')
+            'script' : os.path.join(self.pScriptDir, 'majic3_drop_indexes.sql')
             }
         )
 
@@ -312,7 +341,7 @@ class cadastreImport(QObject):
         scriptList.append(
             {
             'title' : u'Mise en forme des données',
-            'script' : os.path.join(self.ocScriptDir, '%s/majic3_formatage_donnees.sql' % self.dialog.dataVersion),
+            'script' : os.path.join(self.pScriptDir, '%s/majic3_formatage_donnees.sql' % self.dialog.dataVersion),
             'divide': True
             }
         )
@@ -322,7 +351,7 @@ class cadastreImport(QObject):
             scriptList.append(
                 {
                 'title' : u'Purge des données brutes',
-                'script' : os.path.join(self.ocScriptDir, 'COMMUN/majic3_purge_donnees_brutes.sql')
+                'script' : os.path.join(self.pScriptDir, 'majic3_purge_donnees_brutes.sql')
                 }
             )
 
@@ -359,7 +388,7 @@ class cadastreImport(QObject):
             scriptList.append(
                 {
                     'title' : u'Ajout des contraintes',
-                    'script' : os.path.join(self.ocScriptDir, 'COMMUN/creation_contraintes.sql'),
+                    'script' : os.path.join(self.pScriptDir, 'commun_creation_contraintes.sql'),
                     'constraints': True,
                     'divide': True
                 }
@@ -420,7 +449,7 @@ class cadastreImport(QObject):
         # 1st path to build the complet liste for each majic source type (nbat, bati, lloc, etc.)
         # and read 1st line to get departement and direction to compare to inputs
         depdirs = {}
-        for item in self.dialog.majicSourceFileNames:
+        for item in self.majicSourceFileNames:
             table = item['table']
             value = item['value']
             # Get majic files for item
@@ -445,13 +474,13 @@ class cadastreImport(QObject):
 
         # Check if some important majic files are missing
         fKeys = [ a for a in majicFilesFound if majicFilesFound[a] ]
-        rKeys = [ a['table'] for a in self.dialog.majicSourceFileNames if a['required'] ]
+        rKeys = [ a['table'] for a in self.majicSourceFileNames if a['required'] ]
         mKeys = [ a for a in rKeys if a not in fKeys ]
         if mKeys:
-            msg = u"<b>ERREUR : MAJIC - Des fichiers MAJIC importants sont manquants: %s </b><br/>Vérifier le chemin des fichiers MAJIC:<br/>%s <br/>ainsi que les noms des fichiers attendus dans la configuration du plugin Cadastre:<br/>%s<br/><br/>" % (
+            msg = u"<b>Des fichiers MAJIC importants sont manquants: %s </b><br/>Vérifier le chemin des fichiers MAJIC:<br/>%s <br/>ainsi que les noms des fichiers configurés dans les options du plugin Cadastre:<br/>%s<br/><br/>Vous pouvez télécharger les fichiers fantoirs à cette adresse :<br/><a href='http://www.collectivites-locales.gouv.fr/mise-a-disposition-fichier-fantoir-des-voies-et-lieux-dits'>http://www.collectivites-locales.gouv.fr/mise-a-disposition-fichier-fantoir-des-voies-et-lieux-dits</a><br/>" % (
                 ', '.join(mKeys),
                 self.dialog.majicSourceDir,
-                ', '.join([a['value'].upper() for a in self.dialog.majicSourceFileNames])
+                ', '.join([a['value'].upper() for a in self.majicSourceFileNames])
             )
             missingMajicIgnore = QMessageBox.question(
                 self.dialog,
@@ -502,7 +531,7 @@ class cadastreImport(QObject):
 
 
         # 2nd path to insert data
-        for item in self.dialog.majicSourceFileNames:
+        for item in self.majicSourceFileNames:
             table = item['table']
             self.totalSteps+= len(majicFilesFound[table])
             processedFilesCount+=len(majicFilesFound[table])
@@ -555,7 +584,7 @@ class cadastreImport(QObject):
 
         # Log : Print connection parameters to database
         jobTitle = u'EDIGEO'
-        self.beginJobLog(14, jobTitle)
+        self.beginJobLog(13, jobTitle)
         self.qc.updateLog(u'Type de base : %s, Connexion: %s, Schéma: %s' % (
                 self.dialog.dbType,
                 self.dialog.connectionName,
@@ -565,23 +594,12 @@ class cadastreImport(QObject):
         self.updateProgressBar()
 
         if self.go:
-            # copy files in temp dir
-            self.dialog.subStepLabel.setText('Copie des fichiers')
-            self.updateProgressBar()
-            self.copyFilesToTemp(self.dialog.edigeoSourceDir, self.edigeoDir)
-            self.updateTimer()
-        self.updateProgressBar()
-
-        if self.go:
             # unzip edigeo files in temp dir
             self.dialog.subStepLabel.setText('Extraction des fichiers')
             self.updateProgressBar()
-            self.unzipFolderContent(self.edigeoDir)
+            self.unzipFolderContent(self.dialog.edigeoSourceDir)
             self.updateTimer()
         self.updateProgressBar()
-
-        # Copy eventual plain edigeo files in edigeoPlainDir
-        shutil.copytree(self.edigeoDir, os.path.join(self.edigeoPlainDir, 'plain'))
 
         scriptList = []
         replaceDict = self.replaceDict.copy()
@@ -603,7 +621,7 @@ class cadastreImport(QObject):
         scriptList.append(
             {
                 'title' : u'Suppression des contraintes',
-                'script' : '%s' % os.path.join(self.ocScriptDir, 'COMMUN/suppression_constraintes.sql'),
+                'script' : '%s' % os.path.join(self.pScriptDir, 'commun_suppression_contraintes.sql'),
                 'constraints': False,
                 'divide' : True
             }
@@ -662,7 +680,7 @@ class cadastreImport(QObject):
         scriptList.append(
             {
                 'title' : u'Mise en forme des données',
-                'script' : os.path.join( self.ocScriptDir, '%s/edigeo_formatage_donnees.sql' % self.dialog.dataVersion),
+                'script' : os.path.join(self.pScriptDir, 'edigeo_formatage_donnees.sql'),
                 'divide': True
             }
         )
@@ -685,7 +703,7 @@ class cadastreImport(QObject):
         scriptList.append(
             {
                 'title' : u'Ajout des contraintes',
-                'script' : os.path.join(self.ocScriptDir, 'COMMUN/creation_contraintes.sql' ),
+                'script' : os.path.join(self.pScriptDir, 'commun_creation_contraintes.sql' ),
                 'constraints': True,
                 'divide': True
             }
@@ -747,11 +765,8 @@ class cadastreImport(QObject):
         self.dialog.subStepLabel.setText(u'Suppression des données temporaires')
         self.updateProgressBar()
         tempFolderList = [
-            self.ocScriptDir,
             self.pScriptDir,
-            self.edigeoDir,
             self.edigeoPlainDir,
-            self.majicDir
         ]
         delmsg = ""
         try:
@@ -800,7 +815,7 @@ class cadastreImport(QObject):
 
     def copyFilesToTemp(self, source, target):
         '''
-        Copy opencadastre scripts
+        Copy cadastre scripts
         into a temporary folder
         '''
         if self.go:
@@ -827,16 +842,22 @@ class cadastreImport(QObject):
         return None
 
 
-    def listFilesInDirectory(self, path, ext=None):
+    def listFilesInDirectory(self, path, extensionList=[], invert=False):
         '''
         List all files from folder and subfolder
-        for a specific extension if given
+        for a specific extension if given ( via the list extensionList ).
+        If invert is True, then get all files
+        but those corresponding to the given extensions.
         '''
         fileList = []
         for root, dirs, files in os.walk(path):
             for i in files:
-                if not ext or (ext and os.path.splitext(i)[1][1:].lower() == ext):
-                    fileList.append(os.path.join(root, i))
+                if not invert:
+                    if os.path.splitext(i)[1][1:].lower() in extensionList:
+                        fileList.append(os.path.join(root, i))
+                else:
+                    if os.path.splitext(i)[1][1:].lower() not in extensionList:
+                        fileList.append(os.path.join(root, i))
         return fileList
 
 
@@ -850,23 +871,19 @@ class cadastreImport(QObject):
             self.qc.updateLog(u'* Décompression des fichiers')
 
             # get all the zip files
-            zipFileList = self.listFilesInDirectory(path, 'zip')
+            zipFileList = self.listFilesInDirectory(path, ['zip'])
 
             # unzip all files
             import zipfile
             import tarfile
             try:
-                # unzip all zip in self.edigeoDir
+                # unzip all zip in source folder
                 for z in zipFileList:
+                    # Extract file from edigeoDir into edigeoPlainDir
                     with zipfile.ZipFile(z) as azip:
                         azip.extractall(self.edigeoPlainDir)
-                    try:
-                        os.remove(z)
-                    except OSError, e:
-                        self.qc.updateLog( "<b>Erreur lors de la suppression de %s</b>" % str(z))
-                        pass # in Windows, sometime file is not unlocked
 
-                # unzip all zip in edigeoPlainDir
+                # unzip all new zip in edigeoPlainDir
                 inner_zips_pattern = os.path.join(self.edigeoPlainDir, "*.zip")
                 i=0
                 for filename in glob.glob(inner_zips_pattern):
@@ -880,13 +897,19 @@ class cadastreImport(QObject):
                         self.qc.updateLog( "<b>Erreur lors de la suppression de %s</b>" % str(filename))
                         pass # in Windows, sometime file is not unlocked
                     i+=1
-                i=0
 
-                # untar all tar.bz2 in self.edigeoPlainDir
-                tarFileListA = self.listFilesInDirectory(path, 'bz2')
-                tarFileListB = self.listFilesInDirectory(self.edigeoPlainDir, 'bz2')
-                tarFileList = list(set(tarFileListA) | set(tarFileListB))
-                for z in tarFileList:
+                i=0
+                # untar all tar.bz2 in source folder
+                tarFileListA = self.listFilesInDirectory(path, ['bz2'])
+                for z in tarFileListA:
+                    with tarfile.open(z) as t:
+                        tar = t.extractall(os.path.join(self.edigeoPlainDir, 'tar_%s' % i))
+                        i+=1
+                        t.close()
+
+                # untar all new tar.bz2 found in self.edigeoPlainDir
+                tarFileListB = self.listFilesInDirectory(self.edigeoPlainDir, ['bz2'])
+                for z in tarFileListB:
                     with tarfile.open(z) as t:
                         tar = t.extractall(os.path.join(self.edigeoPlainDir, 'tar_%s' % i))
                         i+=1
@@ -959,7 +982,6 @@ class cadastreImport(QObject):
     def executeSqlScript(self, scriptPath, divide=False, ignoreError=False):
         '''
         Execute an SQL script file
-        from opencadastre
         '''
 
         if self.go:
@@ -1101,7 +1123,11 @@ class cadastreImport(QObject):
             # THF
             self.dialog.subStepLabel.setText(u'Import des fichiers via ogr2ogr (*.thf)')
             self.qc.updateLog(u'  - Import des fichiers via ogr2ogr')
-            thfList = self.listFilesInDirectory(self.edigeoPlainDir, 'thf')
+            # Get plain files in source directory
+            thfList1 = self.listFilesInDirectory(self.dialog.edigeoSourceDir, ['thf'])
+            # Get files which have been uncompressed by plugin in temp folder
+            thfList2 = self.listFilesInDirectory(self.edigeoPlainDir, ['thf'])
+            thfList = list(set(thfList1) | set(thfList2))
             self.step = 0
             self.totalSteps = len(thfList)
             for thf in thfList:
@@ -1115,7 +1141,11 @@ class cadastreImport(QObject):
             # VEC - import relations between objects
             self.dialog.subStepLabel.setText(u'Import des relations (*.vec)')
             self.qc.updateLog(u'  - Import des relations (*.vec)')
-            vecList = self.listFilesInDirectory(self.edigeoPlainDir, 'vec')
+            # Get plain files in source directory
+            vecList1 = self.listFilesInDirectory(self.dialog.edigeoSourceDir, ['vec'])
+            # Get files which have been uncompressed by plugin in temp folder
+            vecList2 = self.listFilesInDirectory(self.edigeoPlainDir, ['vec'])
+            vecList = list(set(vecList1) | set(vecList2))
             self.step = 0
             self.totalSteps = len(vecList)
             for vec in vecList:
