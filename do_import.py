@@ -869,7 +869,7 @@ class cadastre_import_cli(QObject):
 
         #~ # Run Script for creating tables
         if not self.hasStructure:
-            qi.installOpencadastreStructure()
+            qi.installCadastreStructure()
 
         # Run MAJIC import
         if self.doMajicImport:
