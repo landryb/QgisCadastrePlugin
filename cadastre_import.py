@@ -39,6 +39,7 @@ from datetime import datetime
 from db_manager.db_plugins.plugin import DBPlugin, Schema, Table, BaseError
 from db_manager.db_plugins import createDbPlugin
 from db_manager.dlg_db_error import DlgDbError
+from pyspatialite import dbapi2 as sqlite
 
 # Import ogr2ogr.py from processing plugin
 try:
@@ -55,6 +56,8 @@ except ImportError:
     pass
 
 from scripts.pyogr.ogr2ogr import main as ogr2ogr
+
+from cadastre_dialogs import cadastre_common
 
 class cadastreImport(QObject):
 
@@ -289,7 +292,7 @@ class cadastreImport(QObject):
 
         # Log
         jobTitle = u'MAJIC'
-        self.beginJobLog(12, jobTitle)
+        self.beginJobLog(13, jobTitle)
 
         # dict for parameters replacement
         replaceDict = self.replaceDict.copy()
@@ -382,9 +385,17 @@ class cadastreImport(QObject):
                 }
             )
 
+            # Ajout de la table parcelle_info
+            replaceDict['2154'] = self.targetSrid
+            scriptList.append(
+                {
+                    'title' : u'Ajout de la table parcelle_info',
+                    'script' : '%s' % os.path.join(self.pScriptDir, 'edigeo_create_table_parcelle_info_majic.sql'),
+                    'divide': False
+                }
+            )
 
-        # Add constraints : only if no EDIGEO import afterwards
-        if not self.dialog.doEdigeoImport :
+            # Add constraints
             scriptList.append(
                 {
                     'title' : u'Ajout des contraintes',
@@ -460,9 +471,13 @@ class cadastreImport(QObject):
                         fpath = os.path.join(root, i)
                         # Add file path to the list
                         majList.append(fpath)
-                        # Read 3 first letters
+
+                        # Store depdir for this file
+                        # avoid fantoir, as now it is given for the whole country
+                        if table == 'fanr':
+                            continue
+                        # Get depdir : first line with content
                         with open(fpath) as fin:
-                            # Divide file into chuncks
                             for a in fin:
                                 if len( a ) < 4 :
                                   continue
@@ -531,11 +546,11 @@ class cadastreImport(QObject):
 
 
         # 2nd path to insert data
+        depdir = '%s%s' % (self.dialog.edigeoDepartement, self.dialog.edigeoDirection)
         for item in self.majicSourceFileNames:
             table = item['table']
             self.totalSteps+= len(majicFilesFound[table])
             processedFilesCount+=len(majicFilesFound[table])
-
             for fpath in majicFilesFound[table]:
                 self.qc.updateLog(fpath)
 
@@ -546,20 +561,21 @@ class cadastreImport(QObject):
                         # Build sql INSERT query depending on database
                         if self.dialog.dbType == 'postgis':
                             sql = "BEGIN;"
-                            sql = self.qc.setSearchPath(sql, self.dialog.schema)
+                            sql = cadastre_common.setSearchPath(sql, self.dialog.schema)
+                            # Build INSERT list
                             sql+= '\n'.join(
                                 [
                                 "INSERT INTO \"%s\" VALUES (%s);" % (
                                     table,
                                     self.connector.quoteString( r.sub(' ', x.strip('\r\n')) )
-                                ) for x in a if x
+                                ) for x in a if x and x[0:3] == depdir
                                 ]
                             )
                             sql+= "COMMIT;"
                             self.executeSqlQuery(sql)
                         else:
                             c = self.connector._get_cursor()
-                            c.executemany('INSERT INTO %s VALUES (?)' % table, [( r.sub(' ', x.strip('\r\n')) ,) for x in a if x] )
+                            c.executemany('INSERT INTO %s VALUES (?)' % table, [( r.sub(' ', x.strip('\r\n')) ,) for x in a if x and x[0:3] == depdir] )
                             self.connector._commit()
                             c.close()
                             del c
@@ -584,7 +600,7 @@ class cadastreImport(QObject):
 
         # Log : Print connection parameters to database
         jobTitle = u'EDIGEO'
-        self.beginJobLog(13, jobTitle)
+        self.beginJobLog(21, jobTitle)
         self.qc.updateLog(u'Type de base : %s, Connexion: %s, Schéma: %s' % (
                 self.dialog.dbType,
                 self.dialog.connectionName,
@@ -720,6 +736,26 @@ class cadastreImport(QObject):
                 }
             )
 
+
+        # Ajout de la table parcelle_info
+        if ( self.dialog.doMajicImport or self.dialog.hasMajicDataProp ):
+            replaceDict['2154'] = self.targetSrid
+            scriptList.append(
+                {
+                    'title' : u'Ajout de la table parcelle_info',
+                    'script' : '%s' % os.path.join(self.pScriptDir, 'edigeo_create_table_parcelle_info_majic.sql')
+                }
+            )
+        else:
+            replaceDict['2154'] = self.targetSrid
+            scriptList.append(
+                {
+                    'title' : u'Ajout de la table parcelle_info',
+                    'script' : '%s' % os.path.join(self.pScriptDir, 'edigeo_create_table_parcelle_info_simple.sql')
+                }
+            )
+
+
         for item in scriptList:
             if self.go:
                 self.dialog.subStepLabel.setText(item['title'])
@@ -751,6 +787,11 @@ class cadastreImport(QObject):
         # Log
         jobTitle = u'FINALISATION'
         self.beginJobLog(1, jobTitle)
+
+        # Debug spatialite
+        if self.dialog.dbType == 'spatialite':
+            sql = "SELECT RecoverGeometryColumn( 'parcelle_info', 'geom', %s, 'MULTIPOLYGON', 2 );" % self.targetSrid
+            self.executeSqlQuery(sql)
 
         # Re-set SQL optimization parameters to default
         if self.dialog.dbType == 'postgis':
@@ -787,6 +828,11 @@ class cadastreImport(QObject):
             sql = self.qc.setSearchPath(sql, self.dialog.schema)
         self.executeSqlQuery(sql)
 
+        # Add parcelle_info index for postgis only (not capability of that type for spatialite)
+        if self.dialog.dbType == 'postgis':
+            sql = 'DROP INDEX IF EXISTS parcelle_info_geo_parcelle_sub;CREATE INDEX parcelle_info_geo_parcelle_sub ON parcelle_info( substr("geo_parcelle", 1, 10));'
+            sql = self.qc.setSearchPath(sql, self.dialog.schema)
+            self.executeSqlQuery(sql)
 
         # Refresh spatialite layer statistics
         if self.dialog.dbType == 'spatialite':
@@ -1010,7 +1056,8 @@ class cadastreImport(QObject):
 
             # Convert SQL into spatialite syntax
             if self.dialog.dbType == 'spatialite':
-                sql = self.qc.postgisToSpatialite(sql, self.targetSrid)
+                sql = cadastre_common.postgisToSpatialite(sql, self.targetSrid)
+                sql = cadastre_common.postgisToSpatialiteLocal10(sql, self.dialog.dataYear)
 
             #~ self.qc.updateLog('|%s|' % sql)
             # Execute query
@@ -1058,6 +1105,7 @@ class cadastreImport(QObject):
         '''
         Execute a SQL string query
         And commit
+        NB: commit qgis/QGIS@14ab5eb changes QGIS DBmanager behaviour
         '''
         if self.go:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1066,7 +1114,7 @@ class cadastreImport(QObject):
 
             if self.dialog.dbType == 'postgis':
                 try:
-                    c = self.connector._execute_and_commit(sql)
+                    c = self.connector._execute_and_commit(sql.encode('utf-8'))
                 except BaseError as e:
                     if not ignoreError \
                     and not re.search(r'ADD COLUMN tempo_import', sql, re.IGNORECASE) \
@@ -1074,6 +1122,16 @@ class cadastreImport(QObject):
                         DlgDbError.showError(e, self.dialog)
                         self.go = False
                         self.qc.updateLog(e.msg)
+                except UnicodeDecodeError as e:
+                    try:
+                        c = self.connector._execute_and_commit(sql)
+                    except BaseError as e:
+                        if not ignoreError \
+                        and not re.search(r'ADD COLUMN tempo_import', sql, re.IGNORECASE) \
+                        and not re.search(r'CREATE INDEX ', sql, re.IGNORECASE):
+                            DlgDbError.showError(e, self.dialog)
+                            self.go = False
+                            self.qc.updateLog(e.msg)
                 finally:
                     QApplication.restoreOverrideCursor()
                     if c:
@@ -1090,7 +1148,7 @@ class cadastreImport(QObject):
                 try:
                     c = self.connector._get_cursor()
                     c.executescript(sql)
-                except BaseError as e:
+                except (BaseError, sqlite.OperationalError) as e:
                     if not re.search(r'ADD COLUMN tempo_import', sql, re.IGNORECASE) \
                     and not re.search(r'CREATE INDEX ', sql, re.IGNORECASE):
                         self.go = False
@@ -1189,20 +1247,27 @@ class cadastreImport(QObject):
                 settingsList = ["service", "host", "port", "database", "username", "password"]
                 service, host, port, database, username, password = map(lambda x: settings.value(x), settingsList)
 
-                cmdArgs = [
-                    '',
-                    '-s_srs', self.sourceSridFull,
-                    targetSridOption, self.targetSridFull,
-                    '-append',
-                    '-f', 'PostgreSQL',
-                    'PG:host=%s port=%s dbname=%s active_schema=%s user=%s password=%s' % (
+                if service:
+                    pg_access = 'PG:service=%s active_schema=%s' % (
+                        service,
+                        self.dialog.schema
+                    )
+                else:
+                    pg_access = 'PG:host=%s port=%s dbname=%s active_schema=%s user=%s password=%s' % (
                         host,
                         port,
                         database,
                         self.dialog.schema,
                         username,
                         password
-                    ),
+                    )
+                cmdArgs = [
+                    '',
+                    '-s_srs', self.sourceSridFull,
+                    targetSridOption, self.targetSridFull,
+                    '-append',
+                    '-f', 'PostgreSQL',
+                    pg_access,
                     filename,
                     '-lco', 'GEOMETRY_NAME=geom',
                     '-lco', 'PG_USE_COPY=YES',
@@ -1210,6 +1275,7 @@ class cadastreImport(QObject):
                     '-gt', '50000',
                     '--config', 'OGR_EDIGEO_CREATE_LABEL_LAYERS', 'NO'
                 ]
+                #-c client_encoding=latin1
 
             if self.dialog.dbType == 'spatialite':
                 if not settings.contains( "sqlitepath" ): # non-existent entry?
@@ -1235,6 +1301,7 @@ class cadastreImport(QObject):
                     '--config', 'OGR_SQLITE_CACHE', '512'
                 ]
 
+            #self.qc.updateLog( ' '.join(cmdArgs))
             # Run only if ogr2ogr found
             if self.go:
                 # Workaround to get ogr2ogr error messages via stdout
@@ -1277,7 +1344,7 @@ class cadastreImport(QObject):
                     for item in l:
                         sql+= "INSERT INTO edigeo_rel ( nom, de, vers) VALUES ( '%s', '%s', '%s');" % (item[0], item[1], item[2] )
                     sql+="COMMIT;"
-                    sql = self.qc.setSearchPath(sql, self.dialog.schema)
+                    sql = cadastre_common.setSearchPath(sql, self.dialog.schema)
                     self.executeSqlQuery(sql)
                 if self.dialog.dbType == 'spatialite':
                     c = self.connector._get_cursor()
@@ -1413,6 +1480,7 @@ class cadastreImport(QObject):
             for table in edigeoImportTables:
                 sql+= 'DROP TABLE IF EXISTS "%s";' % table
             if self.dialog.dbType == 'postgis':
-                sql = self.qc.setSearchPath(sql, self.dialog.schema)
+                sql = cadastre_common.setSearchPath(sql, self.dialog.schema)
             self.executeSqlQuery(sql)
+
 

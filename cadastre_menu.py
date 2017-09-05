@@ -24,10 +24,14 @@
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from PyQt4.QtXml import QDomDocument
 from qgis.core import *
 from cadastre_identify_parcelle import IdentifyParcelle
-from cadastre_dialogs import *
+from cadastre_dialogs import cadastre_common, cadastre_search_dialog, cadastre_import_dialog, cadastre_load_dialog, cadastre_option_dialog, cadastre_about_dialog, cadastre_parcelle_dialog, cadastre_message_dialog
 import ConfigParser
+import os.path
+import tempfile
+from time import time
 
 # ---------------------------------------------
 
@@ -35,22 +39,13 @@ class cadastre_menu:
     def __init__(self, iface):
         self.iface = iface
         self.mapCanvas = iface.mapCanvas()
-        self.cadastre_menu = None
-
         self.cadastre_search_dialog = None
-        self.qc = None
 
     def cadastre_add_submenu(self, submenu):
-        if self.cadastre_menu != None:
-            self.cadastre_menu.addMenu(submenu)
-        else:
-            self.iface.addPluginToMenu("&cadastre", submenu.menuAction())
+        self.iface.addPluginToMenu("&Cadastre", submenu.menuAction())
 
     def initGui(self):
 
-        # Add Cadastre to QGIS menu
-        self.cadastre_menu = QMenu(QCoreApplication.translate("cadastre", "Cadastre"))
-        self.iface.mainWindow().menuBar().insertMenu(self.iface.firstRightStandardMenu().menuAction(), self.cadastre_menu)
 
         # Import Submenu
         icon = QIcon(os.path.dirname(__file__) + "/icons/database.png")
@@ -64,12 +59,16 @@ class cadastre_menu:
         if not self.cadastre_search_dialog:
             dialog = cadastre_search_dialog(self.iface)
             self.cadastre_search_dialog = dialog
-            self.qc = cadastre_common(dialog)
 
         # Load Submenu
         icon = QIcon(os.path.dirname(__file__) + "/icons/output.png")
         self.load_action = QAction(icon, u"Charger des données", self.iface.mainWindow())
         QObject.connect(self.load_action, SIGNAL("triggered()"), self.open_load_dialog)
+
+        # Composer Submenu
+        icon = QIcon(os.path.dirname(__file__) + "/icons/mActionSaveAsPDF.png")
+        self.export_action = QAction(icon, u"Exporter la vue", self.iface.mainWindow())
+        QObject.connect(self.export_action, SIGNAL("triggered()"), self.export_view)
 
         # Options Submenu
         icon = QIcon(os.path.dirname(__file__) + "/icons/config.png")
@@ -91,18 +90,19 @@ class cadastre_menu:
         self.version_action = QAction(icon, u"Notes de version", self.iface.mainWindow())
         QObject.connect(self.version_action, SIGNAL("triggered()"), self.open_message_dialog)
 
+        # Add Cadastre to Extension menu
+        self.iface.addPluginToMenu(u"&Cadastre", self.import_action)
+        self.iface.addPluginToMenu(u"&Cadastre", self.load_action)
+        self.iface.addPluginToMenu(u"&Cadastre", self.search_action)
+        self.iface.addPluginToMenu(u"&Cadastre", self.export_action)
+        self.iface.addPluginToMenu(u"&Cadastre", self.option_action)
+        self.iface.addPluginToMenu(u"&Cadastre", self.about_action)
+        self.iface.addPluginToMenu(u"&Cadastre", self.version_action)
+        self.iface.addPluginToMenu(u"&Cadastre", self.help_action)
 
-        # Add actions to Cadastre menu
-        self.cadastre_menu.addAction(self.import_action)
-        self.cadastre_menu.addAction(self.load_action)
-        self.cadastre_menu.addAction(self.search_action)
-        self.cadastre_menu.addAction(self.option_action)
-        self.cadastre_menu.addAction(self.about_action)
-        self.cadastre_menu.addAction(self.help_action)
-        self.cadastre_menu.addAction(self.version_action)
 
         # Add cadastre toolbar
-        self.toolbar = self.iface.addToolBar(u'Cadastre');
+        self.toolbar = self.iface.addToolBar(u'&Cadastre');
 
         # open import dialog
         self.openImportAction = QAction(
@@ -132,6 +132,15 @@ class cadastre_menu:
         self.openSearchAction.triggered.connect(self.toggle_search_dialog)
         #~ self.openSearchAction.setCheckable(True)
         self.toolbar.addAction(self.openSearchAction)
+
+        # export composer
+        self.runExportAction = QAction(
+            QIcon(os.path.dirname(__file__) +"/icons/mActionSaveAsPDF.png"),
+            u"Exporter la vue",
+            self.iface.mainWindow()
+        )
+        self.runExportAction.triggered.connect(self.export_view)
+        self.toolbar.addAction(self.runExportAction)
 
         # open Option dialog
         self.openOptionAction = QAction(
@@ -216,6 +225,55 @@ class cadastre_menu:
         else:
             self.cadastre_search_dialog.show()
 
+    def export_view(self):
+        '''
+        Export current view to PDF
+        '''
+        # Load template from file
+        s = QSettings()
+        f = s.value("cadastre/composerTemplateFile", '', type=str)
+        if not os.path.exists(f):
+            f = '%s/composers/paysage_a4.qpt' % os.path.dirname(__file__)
+            s.setValue("cadastre/composerTemplateFile", f)
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        tf = file(f, 'rt')
+        tc= tf.read()
+        tf.close()
+        d= QDomDocument()
+        d.setContent(tc)
+
+        # Create composition
+        ms = self.iface.mapCanvas().mapSettings()
+        c = QgsComposition(ms)
+        c.loadFromTemplate(d)
+
+        c.setPlotStyle(QgsComposition.Print)
+        #c.setPrintResolution(300)
+
+        # Set map
+        canvas = self.iface.mapCanvas()
+        cm = c.getComposerMapById(0)
+        extent = canvas.extent()
+        scale = canvas.scale()
+        cm.setMapCanvas(canvas)
+        if extent:
+            cm.zoomToExtent(extent)
+        if scale:
+            cm.setNewScale(scale)
+
+        # Export
+        tempDir = s.value("cadastre/tempDir", '%s' % tempfile.gettempdir(), type=str)
+        self.targetDir = tempfile.mkdtemp('', 'cad_export_', tempDir)
+        temp = int(time()*100)
+        temppath = os.path.join(tempDir, 'export_cadastre_%s.pdf' % temp)
+        c.exportAsPDF(temppath)
+
+        QApplication.restoreOverrideCursor()
+
+        if os.path.exists(temppath):
+            cadastre_common.openFile(temppath)
+
     def open_option_dialog(self):
         '''
         Config dialog
@@ -260,7 +318,13 @@ class cadastre_menu:
         If not deactivate Identify parcelle tool
         '''
         # Find parcelle layer
-        parcelleLayer = self.qc.getLayerFromLegendByTableProps('geo_parcelle')
+        parcelleLayer = None
+        try:
+            from cadastre_dialogs import cadastre_common
+            parcelleLayer = cadastre_common.getLayerFromLegendByTableProps('parcelle_info')
+        except:
+            parcelleLayer = None
+
         if not parcelleLayer:
             self.identifyParcelleAction.setChecked(False)
             self.iface.actionPan().trigger()
@@ -273,7 +337,7 @@ class cadastre_menu:
         '''
 
         # Find parcelle layer
-        parcelleLayer = self.qc.getLayerFromLegendByTableProps('geo_parcelle')
+        parcelleLayer = cadastre_common.getLayerFromLegendByTableProps('parcelle_info')
         if not parcelleLayer:
             QMessageBox.warning(
                 self.cadastre_search_dialog,
@@ -349,6 +413,13 @@ class cadastre_menu:
                     u'Certaines données EDIGEO contiennent des géométries invalides (polygones croisés dit "papillons", polygones non fermés, etc.). Cette version utilise une fonction de PostGIS qui tente de corriger ces invalidités. Il faut impérativement <b>utiliser une version récente de PostGIS</b> : 2.0.4 minimum pour la version 2, ou les version ultérieures (2.1 par exemple)'
                 ]
             ]
+            ,
+            '1.4.0': [
+                [
+                    u'Modification de la structure',
+                    u'Pour cette nouvelle version 1.4.0 du plugin, la structure de la base de données a été légèrement modifiée par rapport à la 1.4.0. Pour pouvoir utiliser les fonctions du plugin Cadastre, vous devez donc impérativement <b>réimporter les données dans une base vide</b>. Les changements concernent les identifiants des tables parcelle, geo_parcelle, commune, local00, local10, pev, pevexoneration, pevtaxation, pevprincipale, pevprofessionnelle, pevdependances, ainsi que la création d\'une table parcelle_info pour consolider EDIGEO et MAJIC.'
+                ]
+            ]
         }
         mConfig = self.mConfig
         version = mConfig.get('general', 'version')
@@ -379,13 +450,18 @@ class cadastre_menu:
 
 
     def unload(self):
-        if self.cadastre_menu != None:
-            self.iface.mainWindow().menuBar().removeAction(self.cadastre_menu.menuAction())
-            self.cadastre_menu.deleteLater()
-            self.iface.mainWindow().removeToolBar(self.toolbar)
-        else:
-            self.iface.removePluginMenu("&cadastre", self.cadastre_menu.menuAction())
-            self.cadastre_menu.deleteLater()
+
+        self.iface.removePluginMenu(u"&Cadastre", self.import_action)
+        self.iface.removePluginMenu(u"&Cadastre", self.load_action)
+        self.iface.removePluginMenu(u"&Cadastre", self.search_action)
+        self.iface.removePluginMenu(u"&Cadastre", self.export_action)
+        self.iface.removePluginMenu(u"&Cadastre", self.option_action)
+        self.iface.removePluginMenu(u"&Cadastre", self.about_action)
+        self.iface.removePluginMenu(u"&Cadastre", self.version_action)
+        self.iface.removePluginMenu(u"&Cadastre", self.help_action)
+
+        self.iface.mainWindow().removeToolBar(self.toolbar)
 
         if self.cadastre_search_dialog:
             self.iface.removeDockWidget(self.cadastre_search_dialog)
+

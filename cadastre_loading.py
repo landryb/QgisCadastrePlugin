@@ -54,19 +54,26 @@ class cadastreLoading(QObject):
         self.themeDir = None
 
         # List of database layers to load inQGIS
+        self.mainLayers = [
+            u'Communes',
+            u'Sections',
+            u'Parcelles',
+            u'Bâti'
+        ]
         self.qgisCadastreLayerList = [
-            {'label': u'Commune', 'name': 'geo_commune', 'table': 'geo_commune', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'D'},
+            {'label': u'Communes', 'name': 'geo_commune', 'table': 'geo_commune', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'C', 'subset': '"geo_commune" IN (%s)'},
+            {'label': u'Tronçons de route', 'name': 'geo_tronroute', 'table': 'geo_tronroute', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'D'},
             {'label': u'Voies, routes et chemins', 'name': 'geo_zoncommuni', 'table': 'geo_zoncommuni', 'geom': 'geom', 'sql': '', 'active': False, 'group': 'D'},
             {'label': u'Noms de voies', 'name': 'geo_label_zoncommuni', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" IN ( \'ZONCOMMUNI_id\') ', 'active': True, 'group': 'E'},
             {'label': u'Secteurs', 'name': 'geo_subdsect', 'table': 'geo_subdsect', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'D'},
             {'label': u'Subdivisions fiscales', 'name': 'geo_subdfisc', 'table': 'geo_subdfisc', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'D'},
             {'label': u'Subdivisions fiscales (étiquette)', 'name': 'geo_label_subdfisc', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'SUBDFISC_id\'', 'active': False, 'group': 'E'},
             {'label': u'Bâti', 'name': 'geo_batiment', 'table': 'geo_batiment', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'D'},
-            {'label': u'Parcelles', 'name': 'geo_parcelle', 'table': 'geo_parcelle', 'geom': 'geom', 'sql': '', 'key': 'ogc_fid', 'active': True, 'group': 'D'},
             {'label': u'Parcelles (étiquettes)', 'name': 'geo_label_parcelle', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'PARCELLE_id\'', 'active': True, 'group': 'E'},
             {'label': u'Lieux-dits', 'name': 'geo_lieudit', 'table': 'geo_lieudit', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'D'},
             {'label': u'Lieux-dits  (étiquettes)', 'name': 'geo_label_lieudit', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'LIEUDIT_id\'', 'active': False, 'group': 'E'},
-            {'label': u'Sections', 'name': 'geo_section', 'table': 'geo_section', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'D'},
+            {'label': u'Sections', 'name': 'geo_section', 'table': 'geo_section', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'C', 'subset': '"geo_commune" IN (%s)'},
+            {'label': u'Parcelles', 'name': 'parcelle_info', 'table': 'parcelle_info', 'geom': 'geom', 'sql': '', 'key': 'ogc_fid', 'active': True, 'group': 'C', 'subset': 'substr("geo_parcelle", 1, 10) IN (%s)'},
             {'label': u'Sections (étiquettes)', 'name': 'geo_label_section', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'SECTION_id\'', 'active': False, 'group': 'E'},
             {'label': u'Bornes', 'name': 'geo_borne', 'table': 'geo_borne', 'geom': 'geom', 'sql': '', 'active': False, 'group': 'D'},
             {'label': u'Croix', 'name': 'geo_croix', 'table': 'geo_croix', 'geom': 'geom', 'sql': '', 'active': False, 'group': 'D'},
@@ -74,7 +81,6 @@ class cadastreLoading(QObject):
             {'label': u'Murs, fossés, clotûres', 'name': 'geo_symblim', 'table': 'geo_symblim', 'geom': 'geom', 'sql': '', 'active': False, 'group': 'D'},
             {'label': u'Cours d\'eau', 'name': 'geo_tronfluv', 'table': 'geo_tronfluv', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'D'},
             {'label': u'Cours d\'eau (étiquettes)', 'name': 'geo_label_tronfluv', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'TRONFLUV_id\'', 'active': True, 'group': 'E'},
-            {'label': u'Tronçons de route', 'name': 'geo_tronroute', 'table': 'geo_tronroute', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'D'},
             {'label': u'Tronçons de route (étiquettes)', 'name': 'geo_label_tronroute', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'TRONROUTE_id\'', 'active': False, 'group': 'E'},
             {'label': u'Surfaces', 'name': 'geo_tsurf', 'table': 'geo_tsurf', 'geom': 'geom', 'sql': '', 'active': True, 'group': 'D'},
             {'label': u'Surfaces (étiquettes)', 'name': 'geo_label_tsurf', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'TSURF_id\'', 'active': False, 'group': 'E'},
@@ -83,8 +89,9 @@ class cadastreLoading(QObject):
             {'label': u'Objets linéaires', 'name': 'geo_tline', 'table': 'geo_tline', 'geom': 'geom', 'sql': '', 'active': False, 'group': 'D'},
             {'label': u'Objets linéaires (étiquettes)', 'name': 'geo_label_tline', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'TLINE_id\'', 'active': False, 'group': 'E'},
             {'label': u'Numéros de voie', 'name': 'geo_label_num_voie', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'NUMVOIE_id\'', 'active': True, 'group': 'E'},
-            {'label': u'Établissements publics', 'name': 'geo_label_voiep', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'VOIEP_id\'', 'active': True, 'group': 'E'},
-            {'label': u'Unités foncières', 'name': 'geo_unite_fonciere', 'table': 'geo_unite_fonciere', 'geom':'geom', 'sql': '', 'dbType': 'postgis', 'active': False, 'group': 'D'}
+            {'label': u'Établissements publics', 'name': 'geo_label_voiep', 'table': 'geo_label', 'geom': 'geom', 'sql': '"ogr_obj_lnk_layer" = \'VOIEP_id\'', 'active': True, 'group': 'E'}
+            #,
+            #{'label': u'Unités foncières', 'name': 'geo_unite_fonciere', 'table': 'geo_unite_fonciere', 'geom':'geom', 'sql': '', 'dbType': 'postgis', 'active': False, 'group': 'D'}
         ]
 
     def updateTimer(self):
@@ -147,7 +154,6 @@ class cadastreLoading(QObject):
         self.qc.updateLog(u'Chargement des tables :')
 
         # Get database list of tables
-        layerUri = self.dialog.db.uri()
         if self.dialog.dbType == 'postgis':
             schemaSearch = [s for s in self.dialog.db.schemas() if s.name == self.dialog.schema]
             schemaInst = schemaSearch[0]
@@ -155,11 +161,48 @@ class cadastreLoading(QObject):
         if self.dialog.dbType == 'spatialite':
             dbTables = self.dialog.db.tables()
 
+        # Get commune filter by expression
+        communeExpression = self.dialog.communeFilter.text()
+        communeFilter = None
+        cExp = QgsExpression(communeExpression)
+        if not cExp.hasParserError():
+            self.qc.updateLog(u'Filtrage à partir des communes : %s' % communeExpression)
+            cReq = QgsFeatureRequest(cExp)
+            cTableList = [a for a in dbTables if a.name == 'geo_commune']
+            cTable = cTableList[0]
+            cUniqueCol = 'ogc_fid'
+            cSchema = self.dialog.schema
+            cGeomCol = 'geom'
+            cLayerUri = self.dialog.db.uri()
+            cLayerUri.setDataSource(
+                cSchema,
+                cTable.name,
+                cGeomCol,
+                '',
+                cUniqueCol
+            )
+            clayer = QgsVectorLayer(cLayerUri.uri(), 'com', providerName)
+            cfeatures = clayer.getFeatures( cReq )
+            cids = [a['commune'] for a in cfeatures]
+            if len(cids):
+                communeFilter = cids
+        else:
+            self.qc.updateLog(u'Filtrage à partir des communes : expression invalide !')
+
+
         # Loop throuhg qgisQastreLayerList and load each corresponding table
         for item in self.qgisCadastreLayerList:
 
+            if item['label'] not in self.mainLayers and self.dialog.cbMainLayersOnly.isChecked():
+                continue
+
             if item.has_key('dbType') and item['dbType'] != self.dialog.dbType:
                 continue
+
+            # update progress bar
+            self.qc.updateLog(u'* %s' % item['label'])
+            self.dialog.step+=1
+            self.qc.updateProgressBar()
 
             # Tables - Get db_manager table instance
             tableList = [a for a in dbTables if a.name == item['table']]
@@ -191,15 +234,46 @@ class cadastreLoading(QObject):
             sql = item['sql']
             geomCol = item['geom']
 
+            if communeFilter:
+                communeFilterText = "'" + "', '".join(communeFilter) + "'"
+                nschema = ''
+                if self.dialog.dbType == 'postgis':
+                    nschema = '"%s".' % schema
+                if 'subset' in item:
+                    subset = item['subset']
+                    sql+= subset % communeFilterText
+                else:
+                    itemcol = item['table']
+                    if item['table'] == 'geo_label':
+                        itemcol = 'ogc_fid'
+                    subset = itemcol + '''
+                         IN (
+
+                            SELECT b.''' + itemcol + '''
+                            FROM  ''' + nschema + item['table'] + ''' b
+                            JOIN  ''' + nschema + '''geo_commune c
+                            ON ST_Within(b.geom, c.geom)
+                            WHERE 2>1
+                            AND c.geo_commune IN ( %s )
+
+                        )
+                    '''
+                    if sql:
+                        sql+= ' AND '
+                    sql+= subset % communeFilterText
+
+
             # Create vector layer
-            layerUri.setDataSource(
+            alayerUri = self.dialog.db.uri()
+            alayerUri.setDataSource(
                 schema,
                 source,
                 geomCol,
                 sql,
                 uniqueCol
             )
-            vlayer = QgsVectorLayer(layerUri.uri(), item['label'], providerName)
+
+            vlayer = QgsVectorLayer(alayerUri.uri(), item['label'], providerName)
 
             # apply style
             qmlPath = os.path.join(
@@ -211,11 +285,6 @@ class cadastreLoading(QObject):
 
             # append vector layer to the list
             qgisCadastreLayers.append(vlayer)
-
-            # update progress bar
-            self.qc.updateLog(u'* %s' % item['label'])
-            self.dialog.step+=1
-            self.qc.updateProgressBar()
 
         self.updateTimer()
 
@@ -239,13 +308,16 @@ class cadastreLoading(QObject):
         if u"Cadastre" in groups:
             g1 = self.getGroupIndex(u"Cadastre")
             if not u'Étiquettes cadastre' in groups:
-                ge = li.addGroup(u'Étiquettes cadastre', True, g1)
+                gf = li.addGroup(u'Fond', True, g1)
+            if not u'Étiquettes cadastre' in groups:
+                ge = li.addGroup(u'Étiquettes cadastre', True, gf)
             if not u'Données cadastre' in groups:
-                gd = li.addGroup(u'Données cadastre', True, g1)
+                gd = li.addGroup(u'Données cadastre', True, gf)
         else:
             g1 = li.addGroup("Cadastre")
-            ge = li.addGroup(u'Étiquettes cadastre', True, g1)
-            gd = li.addGroup(u'Données cadastre', True, g1)
+            gf = li.addGroup("Fond", True, g1)
+            ge = li.addGroup(u'Étiquettes cadastre', True, gf)
+            gd = li.addGroup(u'Données cadastre', True, gf)
 
         for layer in qgisCadastreLayers:
             #~ layer.updateExtents()
@@ -261,8 +333,10 @@ class cadastreLoading(QObject):
                 # Move layer to proper group
                 if qlayer['group'] == 'E':
                     li.moveLayer(layer, ge)
-                if qlayer['group'] == 'D':
+                elif qlayer['group'] == 'D':
                     li.moveLayer(layer, gd)
+                else:
+                    li.moveLayer(layer, g1)
             else:
                 # Move layer to Cadastre group
                 li.moveLayer(layer, g1)
