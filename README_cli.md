@@ -6,9 +6,9 @@ A partir du [plugin Qadastre pour QGIS] (https://github.com/3liz/QgisCadastrePlu
 Dépendances
 ===========
 
-Sur un système debian wheezy, les paquets suivants sont nécessaires :
+Sur un système debian jessie, les paquets suivants sont nécessaires :
 ```
-python-qt4 python-gdal libqt4-sql-psql libqt4-sql-sqlite
+python-qt4 python-pyspatialite python-gdal libqt4-sql-psql libqt4-sql-sqlite python-psycopg2
 ```
 
 Il faut cloner le repository :
