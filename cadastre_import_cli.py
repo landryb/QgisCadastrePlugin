@@ -907,7 +907,7 @@ class cadastreImport(QObject):
                         i+=1
                         t.close()
 
-                # untar all new tar.bz2 in self.edigeoPlainDir
+                # untar all new tar.bz2 found in self.edigeoPlainDir
                 tarFileListB = self.listFilesInDirectory(self.edigeoPlainDir, ['bz2'])
                 for z in tarFileListB:
                     with tarfile.open(z) as t:
