@@ -1001,6 +1001,7 @@ class cadastreImport(QObject):
             # Convert SQL into spatialite syntax
             if self.dialog.dbType == 'spatialite':
                 sql = self.qc.postgisToSpatialite(sql, self.targetSrid)
+                sql = self.qc.postgisToSpatialiteLocal10(sql, self.dialog.dataYear)
 
             #~ self.qc.updateLog('|%s|' % sql)
             # Execute query
@@ -1207,6 +1208,7 @@ class cadastreImport(QObject):
                     '-gt', '50000',
                     '--config', 'OGR_EDIGEO_CREATE_LABEL_LAYERS', 'NO'
                 ]
+                #-c client_encoding=latin1
 
             if self.dialog.dbType == 'spatialite':
                 if not settings.contains( "sqlitepath" ): # non-existent entry?
