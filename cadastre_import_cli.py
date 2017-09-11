@@ -756,6 +756,7 @@ class cadastreImport(QObject):
         # Debug spatialite
         if self.dialog.dbType == 'spatialite':
             sql = "SELECT RecoverGeometryColumn( 'parcelle_info', 'geom', %s, 'MULTIPOLYGON', 2 );" % self.targetSrid
+            sql+= "SELECT RecoverGeometryColumn( 'geo_batiment', 'geom', %s, 'MULTIPOLYGON', 2 );" % self.targetSrid
             self.executeSqlQuery(sql)
 
         # Re-set SQL optimization parameters to default
@@ -1003,9 +1004,9 @@ class cadastreImport(QObject):
                 sql = self.qc.postgisToSpatialite(sql, self.targetSrid)
                 sql = self.qc.postgisToSpatialiteLocal10(sql, self.dialog.dataYear)
 
-            #~ self.qc.updateLog('|%s|' % sql)
             # Execute query
             if not divide:
+                #self.qc.updateLog('|%s|' % sql)
                 self.executeSqlQuery(sql, ignoreError)
             else:
                 statements = sql.split(';')
@@ -1026,7 +1027,7 @@ class cadastreImport(QObject):
                         continue
 
                     sql = '%s' % sqla
-                    #~ self.qc.updateLog('@@%s$$' % sql)
+                    #self.qc.updateLog('@@%s$$' % sql)
                     self.updateProgressBar()
                     # Avoid adding 2 times the same column for spatialite
                     if  self.dialog.dbType == 'spatialite' \
