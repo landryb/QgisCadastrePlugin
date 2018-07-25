@@ -27,17 +27,56 @@ import os.path
 import operator
 import re
 import tempfile
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.core import *
-from qgis.gui import QgsGenericProjectionSelector
+from PyQt4.QtCore import (
+    Qt,
+    pyqtSignal,
+    QObject,
+    QSettings,
+    QRegExp,
+    QFileInfo
+)
+from PyQt4.QtGui import (
+    QTextCursor,
+    QDialog,
+    QFileDialog,
+    QApplication,
+    qApp,
+    QCursor,
+    QPixmap,
+    QCompleter,
+    QSortFilterProxyModel,
+    QStringListModel,
+    QDockWidget,
+    QMessageBox
+)
+from qgis.core import (
+    QgsMapLayerRegistry,
+    QgsMessageLog,
+    QgsLogger,
+    QgsExpression,
+    QgsDataSourceURI,
+    QgsMapLayer,
+    QgsFeatureRequest,
+    QgsCoordinateTransform,
+    QgsCoordinateReferenceSystem
+)
+from qgis.gui import (
+    QgsGenericProjectionSelector
+)
 import unicodedata
 
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/forms")
 
-from db_manager.db_plugins.plugin import DBPlugin, Schema, Table
+# db_manager scripts
+from db_manager.db_plugins.plugin import (
+    DBPlugin,
+    Schema,
+    Table,
+    BaseError
+)
 from db_manager.db_plugins import createDbPlugin
+from db_manager.dlg_db_error import DlgDbError
 from db_manager.db_plugins.postgis.connector import PostGisDBConnector
 import subprocess
 
@@ -601,7 +640,8 @@ class cadastre_common():
             {'in': r"ST_MakeValid\(geom\)",
              'out': r"CASE WHEN ST_IsValid(geom) THEN geom ELSE ST_Buffer(geom,0) END"},
             {'in': r"ST_MakeValid\(p\.geom\)",
-             'out': r"CASE WHEN ST_IsValid(p.geom) THEN p.geom ELSE ST_Buffer(p.geom,0) END"}
+             'out': r"CASE WHEN ST_IsValid(p.geom) THEN p.geom ELSE ST_Buffer(p.geom,0) END"},
+            {'in': r' ~ ', 'out': ' regexp '}
         ]
 
         for a in replaceDict:
@@ -771,7 +811,7 @@ class cadastre_common():
 
 
 
-from cadastre_import import *
+from cadastre_import import cadastreImport
 from PyQt4 import uic
 IMPORT_FORM_CLASS, _ = uic.loadUiType(
     os.path.join(
@@ -1139,7 +1179,7 @@ class cadastre_import_dialog(QDialog, IMPORT_FORM_CLASS):
 # --------------------------------------------------------
 
 
-from cadastre_loading import *
+from cadastre_loading import cadastreLoading
 from PyQt4 import uic
 LOAD_FORM_CLASS, _ = uic.loadUiType(
     os.path.join(
@@ -1187,6 +1227,9 @@ class cadastre_load_dialog(QDialog, LOAD_FORM_CLASS):
         self.liDbConnection.currentIndexChanged[str].connect(self.qc.updateSchemaList)
         self.btProcessLoading.clicked.connect(self.onProcessLoadingClicked)
         self.ql.cadastreLoadingFinished.connect(self.onLoadingEnd)
+
+        self.btLoadSqlLayer.clicked.connect(self.onLoadSqlLayerClicked)
+
         self.rejected.connect(self.onClose)
         self.buttonBox.rejected.connect(self.onClose)
 
@@ -1223,6 +1266,16 @@ class cadastre_load_dialog(QDialog, LOAD_FORM_CLASS):
         if self.connection:
             if self.db:
                 self.ql.processLoading()
+
+    def onLoadSqlLayerClicked(self):
+        '''
+        Loads a layer
+        from given SQL
+        when user clicked on button
+        '''
+        if self.connection:
+            if self.db:
+                self.ql.loadSqlLayer()
 
     def onLoadingEnd(self):
         '''
@@ -1281,7 +1334,7 @@ class CustomQCompleter(QCompleter):
 #        search - search for data among database ans export
 # ---------------------------------------------------------
 
-from cadastre_export import *
+from cadastre_import import cadastreImport
 from PyQt4 import uic
 SEARCH_FORM_CLASS, _ = uic.loadUiType(
     os.path.join(
@@ -2505,7 +2558,11 @@ class cadastre_about_dialog(QDialog, ABOUT_FORM_CLASS):
 # --------------------------------------------------------
 
 
-from cadastre_export import *
+from cadastre_export import cadastreExport
+try:
+    from cadastre_export import cadastrePrintProgress
+except:
+    pass
 from PyQt4 import uic
 PARCELLE_FORM_CLASS, _ = uic.loadUiType(
     os.path.join(

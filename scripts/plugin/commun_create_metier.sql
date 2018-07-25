@@ -18,7 +18,7 @@ CREATE TABLE parcelle (
     dsrpar text,
     dnupro text,
     comptecommunal text,
-    jdatat date,
+    jdatat text,
     dreflf text,
     gpdl text,
     cprsecr text,
@@ -86,7 +86,7 @@ CREATE TABLE suf (
     rclsi text,
     gnidom text,
     topja text,
-    datja date,
+    datja text,
     postel text,
     ccortar integer,
     lot text
@@ -189,7 +189,7 @@ CREATE TABLE local10 (
     dsrpar text,
     dnupro text,
     comptecommunal text,
-    jdatat date,
+    jdatat text,
     dnufnl text,
     ccoeva text,
     ccitlv text,
@@ -213,7 +213,7 @@ CREATE TABLE local10 (
     hlmsem text,
     postel text,
     dnatcg text,
-    jdatcgl date,
+    jdatcgl text,
     dnutbx text,
     dvltla text,
     janloc text,
@@ -491,7 +491,7 @@ CREATE TABLE proprietaire (
     dqualp text,
     dnomlp text,
     dprnlp text,
-    jdatnss date,
+    jdatnss text,
     dldnss text,
     epxnee text,
     dnomcp text,
@@ -505,7 +505,7 @@ CREATE TABLE proprietaire (
     dsiren text,
     ccmm text,
     topja text,
-    datja date,
+    datja text,
     anospi text,
     cblpmo text,
     gtodge text,
@@ -592,7 +592,7 @@ CREATE TABLE lots (
     dnumql integer,
     ddenql integer,
     dfilot text,
-    datact date,
+    datact text,
     dnuprol text,
     comptecommunal text,
     dreflf text,
@@ -731,6 +731,7 @@ CREATE TABLE annul (annul text primary key, annul_lib text);
 CREATE TABLE typvoi (typvoi text primary key, typvoi_lib text);
 CREATE TABLE indldnbat (indldnbat text primary key, indldnbat_lib text);
 CREATE TABLE dformjur (dformjur text primary key, formjur text, libformjur text);
+CREATE TABLE ccocac (ccocac text primary key, ccocac_lib text);
 
 CREATE TABLE geo_commune
 (

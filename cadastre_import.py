@@ -30,13 +30,31 @@ import time
 import tempfile
 import shutil
 from distutils import dir_util
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.core import *
+
+from PyQt4.QtCore import (
+    Qt,
+    QObject,
+    QSettings
+)
+from PyQt4.QtGui import (
+    QCursor,
+    QPixmap,
+    QApplication,
+    QMessageBox
+)
+from qgis.core import (
+    QgsMessageLog,
+    QgsLogger
+)
 from datetime import datetime
 
 # db_manager scripts
-from db_manager.db_plugins.plugin import DBPlugin, Schema, Table, BaseError
+from db_manager.db_plugins.plugin import (
+    DBPlugin,
+    Schema,
+    Table,
+    BaseError
+)
 from db_manager.db_plugins import createDbPlugin
 from db_manager.dlg_db_error import DlgDbError
 from pyspatialite import dbapi2 as sqlite
@@ -75,8 +93,19 @@ class cadastreImport(QObject):
         if self.dialog.doEdigeoImport:
             self.sourceSridFull = self.dialog.edigeoSourceProj
             self.targetSridFull = self.dialog.edigeoTargetProj
+            self.sourceAuth = self.sourceSridFull.split(":")[0]
             self.sourceSrid = self.sourceSridFull.split(":")[1]
             self.targetSrid = self.targetSridFull.split(":")[1]
+
+            # Check IGNF code
+            if self.sourceAuth == 'IGNF':
+                sqlsearch = '%%AUTHORITY["IGNF","%s"]%%' % self.sourceSrid.upper()
+                sql = "SELECT auth_srid FROM spatial_ref_sys WHERE auth_name='IGNF' AND  srtext LIKE '%s' LIMIT 1" % sqlsearch
+                [header, data, rowCount, ok] = cadastre_common.fetchDataFromSqlQuery(self.connector,sql)
+                if rowCount == 1:
+                    for line in data:
+                        self.sourceSrid = str(line[0])
+
         else:
             self.targetSrid = '2154'
 
@@ -492,7 +521,7 @@ class cadastreImport(QObject):
         rKeys = [ a['table'] for a in self.majicSourceFileNames if a['required'] ]
         mKeys = [ a for a in rKeys if a not in fKeys ]
         if mKeys:
-            msg = u"<b>Des fichiers MAJIC importants sont manquants: %s </b><br/>Vérifier le chemin des fichiers MAJIC:<br/>%s <br/>ainsi que les noms des fichiers configurés dans les options du plugin Cadastre:<br/>%s<br/><br/>Vous pouvez télécharger les fichiers fantoirs à cette adresse :<br/><a href='http://www.collectivites-locales.gouv.fr/mise-a-disposition-fichier-fantoir-des-voies-et-lieux-dits'>http://www.collectivites-locales.gouv.fr/mise-a-disposition-fichier-fantoir-des-voies-et-lieux-dits</a><br/>" % (
+            msg = u"<b>Des fichiers MAJIC importants sont manquants: %s </b><br/>Vérifier le chemin des fichiers MAJIC:<br/>%s <br/>ainsi que les noms des fichiers configurés dans les options du plugin Cadastre:<br/>%s<br/><br/>Vous pouvez télécharger les fichiers fantoirs à cette adresse :<br/><a href='https://www.collectivites-locales.gouv.fr/mise-a-disposition-gratuite-fichier-des-voies-et-des-lieux-dits-fantoir'>https://www.collectivites-locales.gouv.fr/mise-a-disposition-gratuite-fichier-des-voies-et-des-lieux-dits-fantoir</a><br/>" % (
                 ', '.join(mKeys),
                 self.dialog.majicSourceDir,
                 ', '.join([a['value'].upper() for a in self.majicSourceFileNames])
@@ -1025,7 +1054,6 @@ class cadastreImport(QObject):
 
         return None
 
-
     def executeSqlScript(self, scriptPath, divide=False, ignoreError=False):
         '''
         Execute an SQL script file
@@ -1147,14 +1175,40 @@ class cadastreImport(QObject):
 
             if self.dialog.dbType == 'spatialite':
                 #~ self.qc.updateLog(sql)
+
                 try:
+                    # Get cursor
                     c = self.connector._get_cursor()
+
+                    # Add regex function (use the above regexp python function)
+                    def regexp(motif, item):
+                        import re
+                        a = False
+                        if item is None or not item:
+                            item = ''
+                        try:
+                            regex = re.compile(motif, re.I)  # re.I: ignore casse
+                            a = regex.search(item) is not None
+                        except Exception as e:
+                            print e.msg
+                        return a
+
+                    c.connection.create_function('regexp', 2, regexp);
+
+                    # Run query
                     c.executescript(sql)
-                except (BaseError, sqlite.OperationalError) as e:
+                except BaseError as e:
                     if not re.search(r'ADD COLUMN tempo_import', sql, re.IGNORECASE) \
                     and not re.search(r'CREATE INDEX ', sql, re.IGNORECASE):
                         self.go = False
-                        self.qc.updateLog(u"<b>Erreurs rencontrées pour la requête:</b> <p>%s</p>" % sql)
+                        self.qc.updateLog(u"<b>Erreur rencontrée pour la requête:</b> <p>%s</p>" % sql)
+                        self.qc.updateLog(u"<b>Erreur </b> <p>%s</p>" % e.msg)
+                except sqlite.OperationalError as e:
+                    if not re.search(r'ADD COLUMN tempo_import', sql, re.IGNORECASE) \
+                    and not re.search(r'CREATE INDEX ', sql, re.IGNORECASE):
+                        self.go = False
+                        self.qc.updateLog(u"<b>Erreur rencontrée pour la requête:</b> <p>%s</p>" % sql)
+                        self.qc.updateLog(u"<b>Erreur </b> <p>%s</p>" % format(e))
                 finally:
                     QApplication.restoreOverrideCursor()
                     if c:

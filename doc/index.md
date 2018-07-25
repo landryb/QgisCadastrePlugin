@@ -114,7 +114,6 @@ Pour les bases de données **PostGIS**, il faut :
 
 Pour les bases de données **Spatialite**, l'interface d'import permet de créer une base de données vide et la connexion QGIS liée si nécessaire.
 
-
 ### Les étapes d'importation
 
 Pour lancer l'importation, il faut bien avoir au préalable configuré les noms des fichiers MAJIC via le menu **Configurer le plugin**. Ensuite, on ouvre la boite de dialogue
@@ -143,13 +142,13 @@ On configure ensuite les options :
 * Choisir le répertoire contenant **les fichiers MAJIC**
 
     - Comme pour EDIGEO, le plugin ira chercher les fichiers dans les répertoires et les sous-répertoires et importera l'ensemble des données.
-    - Si vous ne possédez pas les données FANTOIR dans votre jeu de données MAJIC, nous conseillons vivement de les télécharger et de configurer le plugin pour donner le bon nom au fichier fantoir : http://www.collectivites-locales.gouv.fr/mise-a-disposition-fichier-fantoir-des-voies-et-lieux-dits
+    - Si vous ne possédez pas les données FANTOIR dans votre jeu de données MAJIC, nous conseillons vivement de les télécharger et de configurer le plugin pour donner le bon nom au fichier fantoir : https://www.collectivites-locales.gouv.fr/mise-a-disposition-gratuite-fichier-des-voies-et-des-lieux-dits-fantoir
 
 * Choisir la **version du format** en utilisant les flèches haut et bas
 
     - Seuls les formats de 2012 à 2017 sont pris en compte
 
-* Choisir le **millésime des données**, par exemple 2012
+* Choisir le **millésime des données**, par exemple 2017
 
 * Choisir le **Lot** : utilisez par exemple le code INSEE de la commune.
 
@@ -165,11 +164,33 @@ Le déroulement de l'import est écrit dans le bloc texte situé en bas de la fe
 .. note::  Pendant l'import, il est conseillé de ne pas déplacer ou cliquer dans la fenêtre. Pour l'instant, le plugin n'intègre pas de bouton pour annuler un import en cours.
 
 
+### Projections IGNF
+
+Si votre donnée EDIGEO est en projection IGNF, par exemple pour la Guadeloupe, IGNF:GUAD48UTM20 (Guadeloupe Ste Anne), et que vous souhaitez importer les données dans PostgreSQL, il faut au préalable ajouter dans votre table public.spatial_ref_sys la définition de la projection IGNF. Si vous utilisez à la place l'équivalent EPSG (par exemple ici EPSG:2970), vous risquez un décalage des données lors de la reprojection.
+
+Vous pouvez ajouter dans votre base de données la définition via une requête, par exemple avec la requête suivante pour IGNF:GUAD48UTM20:
+
+```
+INSERT INTO spatial_ref_sys values (
+    998999,
+    'IGNF',
+    998999,
+    'PROJCS["Guadeloupe Ste Anne",GEOGCS["Guadeloupe Ste Anne",DATUM["Guadeloupe St Anne",SPHEROID["International-Hayford 1909",6378388.0000,297.0000000000000,AUTHORITY["IGNF","ELG001"]],TOWGS84[-472.2900,-5.6300,-304.1200,0.4362,-0.8374,0.2563,1.898400],AUTHORITY["IGNF","REG425"]],PRIMEM["Greenwich",0.000000000,AUTHORITY["IGNF","LGO01"]],UNIT["degree",0.01745329251994330],AXIS["Longitude",EAST],AXIS["Latitude",NORTH],AUTHORITY["IGNF","GUAD48GEO"]],PROJECTION["Transverse_Mercator",AUTHORITY["IGNF","PRC0220"]],PARAMETER["semi_major",6378388.0000],PARAMETER["semi_minor",6356911.9461],PARAMETER["latitude_of_origin",0.000000000],PARAMETER["central_meridian",-63.000000000],PARAMETER["scale_factor",0.99960000],PARAMETER["false_easting",500000.000],PARAMETER["false_northing",0.000],UNIT["metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["IGNF","GUAD48UTM20"]]',
+    '+init=IGNF:GUAD48UTM20'
+);
+```
+
+Attention, il est important d'utiliser un code qui est <= 998999, car PostGIS place des contraintes sur le SRID. Nous avons utilisé ici 998999, qui est le maximum possible.
+La liste des caractéristiques des projections peut être trouvée à ce lien : http://librairies.ign.fr/geoportail/resources/IGNF-spatial_ref_sys.sql ( voir discussion Géorézo : https://georezo.net/forum/viewtopic.php?pid=268134 ). Attention, il faut extraire de ce fichier la commande INSERT qui correspond à votre code IGNF, et remplacer le SRID par 998999.
+
+Ensuite, dans la projection source, vous pouvez utiliser IGNF:GUAD48UTM20 au lieu du code EPSG correspondant.
+
 ## Charger des données
 
 Une fois les données importées dans la base, vous pouvez les importer dans QGIS via le menu **Charger les données**.
 
 ![alt](MEDIA/cadastre_load_dialog.png)
+
 
 ### Base de données de travail
 
@@ -205,6 +226,46 @@ Exemples d'expression:
 Pensez à **enlever les données cadastrales existantes dans votre projet QGIS** : Le plugin ne sait pas gérer la recherche et l'interrogation de données si on a plus qu'une version des couches parcelles, communes et sections dans le projet QGIS.
 
 Enfin, cliquez sur le bouton **Charger les données** pour lancer le chargement.
+
+### Charger une couche à partir d'un requête.
+
+L'onglet **Charger une requête** vous donne la possibilité d'utiliser une requête SQL pour récupérer des données de la base. Pour cela, il faut bien connaître le modèle de la base de données, et les spécificités des données MAJIC. Cette fonctionnalité vise à évoluer pour proposer une liste de requêtes intéressantes pour l'exploitation des données cadastrales.
+
+![alt](MEDIA/cadastre_load_dialog_requete.png)
+
+Une fois la connexion choisie, vous pouvez écrire le texte SQL dans le champ texte.
+
+* La requête peut renvoyer des données spatiales ou seulement des données attributaires.
+* Si un des champs retournés est une géométrie, vous devez spécifier son nom dans le champ texte dédié.
+* Si vous utilisez une connexion PostGIS, il faut préfixer les tables avec le nom du schéma. Par exemple `cadastre.geo_parcelle`.
+
+La requête suivante retourne par exemple pour chaque code de parcelle la date de l'acte (on suppose que le schéma est cadastre). Vous pouvez ensuite utiliser une jointure QGIS pour faire le lien avec la couche Parcelles:
+
+```
+SELECT p.parcelle, p.jdatat AS date_acte
+FROM cadastre.parcelle p
+```
+
+La requête suivante renvoit toutes les parcelles appartenant à des collectivités locales, avec la géométrie et les noms des propriétaires
+
+```
+SELECT gp.geo_parcelle,
+string_agg(
+   trim(
+      concat(
+         pr.dnuper || ' - ',
+         trim(pr.dqualp) || ' ',
+         trim(pr.ddenom)
+      )
+   ),'|'
+) AS proprietaire,
+gp.geom AS geom
+FROM cadastre.geo_parcelle gp
+JOIN cadastre.parcelle p ON gp.geo_parcelle = p.parcelle
+JOIN cadastre.proprietaire pr ON p.comptecommunal = pr.comptecommunal
+WHERE pr.dnatpr = 'CLL'
+GROUP BY gp.geo_parcelle, gp.geom
+```
 
 
 ## La barre d'outil Cadastre

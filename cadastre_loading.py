@@ -27,13 +27,37 @@ import re
 import time
 import tempfile
 import shutil
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.core import *
+
+from PyQt4.QtCore import (
+    Qt,
+    QObject,
+    QSettings,
+    pyqtSignal
+)
+from PyQt4.QtGui import (
+    QApplication,
+    QMessageBox
+)
+
+from qgis.core import (
+    QGis,
+    QgsMapLayerRegistry,
+    QgsMessageLog,
+    QgsLogger,
+    QgsExpression,
+    QgsMapLayer,
+    QgsVectorLayer,
+    QgsFeatureRequest
+)
 from datetime import datetime
 
 # db_manager scripts
-from db_manager.db_plugins.plugin import DBPlugin, Schema, Table, BaseError
+from db_manager.db_plugins.plugin import (
+    DBPlugin,
+    Schema,
+    Table,
+    BaseError
+)
 from db_manager.db_plugins import createDbPlugin
 from db_manager.dlg_db_error import DlgDbError
 
@@ -307,12 +331,20 @@ class cadastreLoading(QObject):
                 groups.append(group[0])
         if u"Cadastre" in groups:
             g1 = self.getGroupIndex(u"Cadastre")
-            if not u'Étiquettes cadastre' in groups:
+            if not u'Fond' in groups:
                 gf = li.addGroup(u'Fond', True, g1)
+            else:
+                gf = self.getGroupIndex(u'Fond')
+
             if not u'Étiquettes cadastre' in groups:
                 ge = li.addGroup(u'Étiquettes cadastre', True, gf)
+            else:
+                ge = self.getGroupIndex(u'Étiquettes cadastre')
+
             if not u'Données cadastre' in groups:
                 gd = li.addGroup(u'Données cadastre', True, gf)
+            else:
+                gd = self.getGroupIndex(u"Données cadastre")
         else:
             g1 = li.addGroup("Cadastre")
             gf = li.addGroup("Fond", True, g1)
@@ -377,3 +409,37 @@ class cadastreLoading(QObject):
 
 
         QApplication.restoreOverrideCursor()
+
+    def loadSqlLayer(self):
+        '''
+        Load a vector layer from SQL and information given by the user
+        '''
+        providerName = self.dialog.dbpluginclass.providerName()
+        self.dialog.schema = unicode(self.dialog.liDbSchema.currentText())
+
+        sqlText = self.dialog.sqlText.toPlainText()
+        if self.dialog.dbType == 'postgis':
+            self.dialog.schema = unicode(self.dialog.liDbSchema.currentText())
+
+        geometryColumn = self.dialog.geometryColumn.text()
+        if not geometryColumn:
+            geometryColumn = None
+
+        layerName = self.dialog.layerName.text()
+        if not layerName:
+            layerName = 'requete_cadastre_%s' % datetime.now()
+
+        layer = self.dialog.db.toSqlLayer(
+            sqlText,
+            geometryColumn,
+            None,
+            layerName,
+            QgsMapLayer.VectorLayer,
+            False
+        )
+        if layer.isValid():
+            # Add layer to layer tree
+            QgsMapLayerRegistry.instance().addMapLayers([layer], True)
+        else:
+            self.qc.updateLog(u"La couche n'est pas valide et n'a pu être chargée. Pour PostGIS, avez-vous pensé à indiquer le schéma comme préfixe des tables ?" )
+
