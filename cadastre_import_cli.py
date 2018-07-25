@@ -42,10 +42,6 @@ from PyQt4.QtGui import (
     QApplication,
     QMessageBox
 )
-from qgis.core import (
-    QgsMessageLog,
-    QgsLogger
-)
 from datetime import datetime
 
 # db_manager scripts
