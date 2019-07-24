@@ -1,82 +1,74 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/usr/obj/qgis-2.6.1/qgis-2.6.1/python/plugins/db_manager/ui/DlgFieldProperties.ui'
+# Form implementation generated from reading ui file '/usr/obj/ports/qgis-3.8.1/qgis-3.8.1/python/plugins/db_manager/ui/DlgFieldProperties.ui'
 #
-# Created: Thu Mar  5 05:56:37 2015
-#      by: PyQt4 UI code generator 4.10.3
+# Created by: PyQt5 UI code generator 5.9
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt4 import QtCore, QtGui
-
-try:
-    _fromUtf8 = QtCore.QString.fromUtf8
-except AttributeError:
-    def _fromUtf8(s):
-        return s
-
-try:
-    _encoding = QtGui.QApplication.UnicodeUTF8
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig, _encoding)
-except AttributeError:
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig)
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_DbManagerDlgFieldProperties(object):
     def setupUi(self, DbManagerDlgFieldProperties):
-        DbManagerDlgFieldProperties.setObjectName(_fromUtf8("DbManagerDlgFieldProperties"))
-        DbManagerDlgFieldProperties.resize(261, 247)
-        self.vboxlayout = QtGui.QVBoxLayout(DbManagerDlgFieldProperties)
-        self.vboxlayout.setObjectName(_fromUtf8("vboxlayout"))
-        self.gridlayout = QtGui.QGridLayout()
-        self.gridlayout.setObjectName(_fromUtf8("gridlayout"))
-        self.label = QtGui.QLabel(DbManagerDlgFieldProperties)
-        self.label.setObjectName(_fromUtf8("label"))
-        self.gridlayout.addWidget(self.label, 0, 0, 1, 1)
-        self.editName = QtGui.QLineEdit(DbManagerDlgFieldProperties)
-        self.editName.setText(_fromUtf8(""))
-        self.editName.setObjectName(_fromUtf8("editName"))
-        self.gridlayout.addWidget(self.editName, 0, 1, 1, 1)
-        self.label_2 = QtGui.QLabel(DbManagerDlgFieldProperties)
-        self.label_2.setObjectName(_fromUtf8("label_2"))
-        self.gridlayout.addWidget(self.label_2, 1, 0, 1, 1)
-        self.cboType = QtGui.QComboBox(DbManagerDlgFieldProperties)
-        self.cboType.setEditable(True)
-        self.cboType.setInsertPolicy(QtGui.QComboBox.NoInsert)
-        self.cboType.setObjectName(_fromUtf8("cboType"))
-        self.gridlayout.addWidget(self.cboType, 1, 1, 1, 1)
-        self.label_3 = QtGui.QLabel(DbManagerDlgFieldProperties)
-        self.label_3.setObjectName(_fromUtf8("label_3"))
+        DbManagerDlgFieldProperties.setObjectName("DbManagerDlgFieldProperties")
+        DbManagerDlgFieldProperties.resize(354, 247)
+        self.vboxlayout = QtWidgets.QVBoxLayout(DbManagerDlgFieldProperties)
+        self.vboxlayout.setObjectName("vboxlayout")
+        self.gridlayout = QtWidgets.QGridLayout()
+        self.gridlayout.setObjectName("gridlayout")
+        self.label_3 = QtWidgets.QLabel(DbManagerDlgFieldProperties)
+        self.label_3.setObjectName("label_3")
         self.gridlayout.addWidget(self.label_3, 3, 0, 1, 1)
-        self.chkNull = QtGui.QCheckBox(DbManagerDlgFieldProperties)
-        self.chkNull.setText(_fromUtf8(""))
+        self.chkNull = QtWidgets.QCheckBox(DbManagerDlgFieldProperties)
+        self.chkNull.setText("")
         self.chkNull.setChecked(True)
-        self.chkNull.setObjectName(_fromUtf8("chkNull"))
+        self.chkNull.setObjectName("chkNull")
         self.gridlayout.addWidget(self.chkNull, 3, 1, 1, 1)
-        self.label_4 = QtGui.QLabel(DbManagerDlgFieldProperties)
-        self.label_4.setObjectName(_fromUtf8("label_4"))
+        self.label_4 = QtWidgets.QLabel(DbManagerDlgFieldProperties)
+        self.label_4.setObjectName("label_4")
         self.gridlayout.addWidget(self.label_4, 4, 0, 1, 1)
-        self.editDefault = QtGui.QLineEdit(DbManagerDlgFieldProperties)
-        self.editDefault.setText(_fromUtf8(""))
-        self.editDefault.setObjectName(_fromUtf8("editDefault"))
+        self.label = QtWidgets.QLabel(DbManagerDlgFieldProperties)
+        self.label.setObjectName("label")
+        self.gridlayout.addWidget(self.label, 0, 0, 1, 1)
+        self.cboType = QtWidgets.QComboBox(DbManagerDlgFieldProperties)
+        self.cboType.setEditable(True)
+        self.cboType.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
+        self.cboType.setObjectName("cboType")
+        self.gridlayout.addWidget(self.cboType, 1, 1, 1, 1)
+        self.label_2 = QtWidgets.QLabel(DbManagerDlgFieldProperties)
+        self.label_2.setObjectName("label_2")
+        self.gridlayout.addWidget(self.label_2, 1, 0, 1, 1)
+        self.editName = QtWidgets.QLineEdit(DbManagerDlgFieldProperties)
+        self.editName.setText("")
+        self.editName.setObjectName("editName")
+        self.gridlayout.addWidget(self.editName, 0, 1, 1, 1)
+        self.editDefault = QtWidgets.QLineEdit(DbManagerDlgFieldProperties)
+        self.editDefault.setText("")
+        self.editDefault.setObjectName("editDefault")
         self.gridlayout.addWidget(self.editDefault, 4, 1, 1, 1)
-        self.label_5 = QtGui.QLabel(DbManagerDlgFieldProperties)
-        self.label_5.setObjectName(_fromUtf8("label_5"))
+        self.label_5 = QtWidgets.QLabel(DbManagerDlgFieldProperties)
+        self.label_5.setObjectName("label_5")
         self.gridlayout.addWidget(self.label_5, 2, 0, 1, 1)
-        self.editLength = QtGui.QLineEdit(DbManagerDlgFieldProperties)
-        self.editLength.setText(_fromUtf8(""))
-        self.editLength.setObjectName(_fromUtf8("editLength"))
+        self.editLength = QtWidgets.QLineEdit(DbManagerDlgFieldProperties)
+        self.editLength.setText("")
+        self.editLength.setObjectName("editLength")
         self.gridlayout.addWidget(self.editLength, 2, 1, 1, 1)
+        self.editCom = QtWidgets.QLineEdit(DbManagerDlgFieldProperties)
+        self.editCom.setText("")
+        self.editCom.setObjectName("editCom")
+        self.gridlayout.addWidget(self.editCom, 6, 1, 1, 1)
+        self.label_6 = QtWidgets.QLabel(DbManagerDlgFieldProperties)
+        self.label_6.setObjectName("label_6")
+        self.gridlayout.addWidget(self.label_6, 6, 0, 1, 1)
         self.vboxlayout.addLayout(self.gridlayout)
-        self.buttonBox = QtGui.QDialogButtonBox(DbManagerDlgFieldProperties)
+        self.buttonBox = QtWidgets.QDialogButtonBox(DbManagerDlgFieldProperties)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
-        self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName("buttonBox")
         self.vboxlayout.addWidget(self.buttonBox)
 
         self.retranslateUi(DbManagerDlgFieldProperties)
-        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), DbManagerDlgFieldProperties.reject)
+        self.buttonBox.rejected.connect(DbManagerDlgFieldProperties.reject)
         QtCore.QMetaObject.connectSlotsByName(DbManagerDlgFieldProperties)
         DbManagerDlgFieldProperties.setTabOrder(self.editName, self.cboType)
         DbManagerDlgFieldProperties.setTabOrder(self.cboType, self.editLength)
@@ -85,10 +77,14 @@ class Ui_DbManagerDlgFieldProperties(object):
         DbManagerDlgFieldProperties.setTabOrder(self.editDefault, self.buttonBox)
 
     def retranslateUi(self, DbManagerDlgFieldProperties):
-        DbManagerDlgFieldProperties.setWindowTitle(_translate("DbManagerDlgFieldProperties", "Field properties", None))
-        self.label.setText(_translate("DbManagerDlgFieldProperties", "Name", None))
-        self.label_2.setText(_translate("DbManagerDlgFieldProperties", "Type", None))
-        self.label_3.setText(_translate("DbManagerDlgFieldProperties", "Can be NULL", None))
-        self.label_4.setText(_translate("DbManagerDlgFieldProperties", "Default value", None))
-        self.label_5.setText(_translate("DbManagerDlgFieldProperties", "Length", None))
+        _translate = QtCore.QCoreApplication.translate
+        DbManagerDlgFieldProperties.setWindowTitle(_translate("DbManagerDlgFieldProperties", "Field properties"))
+        self.label_3.setText(_translate("DbManagerDlgFieldProperties", "Can be NULL"))
+        self.label_4.setText(_translate("DbManagerDlgFieldProperties", "Default value expression"))
+        self.label.setText(_translate("DbManagerDlgFieldProperties", "Name"))
+        self.label_2.setText(_translate("DbManagerDlgFieldProperties", "Type"))
+        self.editDefault.setToolTip(_translate("DbManagerDlgFieldProperties", "<html><head/><body><p>Properly quoted PostgreSQL expression (e.g. <code>4</code>, <code>\'text\'</code> or  <code>nextval(\'foo_id_seq\')</code><br/></p></body></html>"))
+        self.label_5.setText(_translate("DbManagerDlgFieldProperties", "Length"))
+        self.editCom.setToolTip(_translate("DbManagerDlgFieldProperties", "<html><head/><body><p>Properly quoted PostgreSQL expression (e.g. <code>4</code>, <code>\'text\'</code> or  <code>nextval(\'foo_id_seq\')</code><br/></p></body></html>"))
+        self.label_6.setText(_translate("DbManagerDlgFieldProperties", "Comment"))
 
