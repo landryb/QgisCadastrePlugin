@@ -20,46 +20,84 @@ email                : brush.tyler@gmail.com
  ***************************************************************************/
 """
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from qgis.core import QgsMessageLog
+from ..plugin import BaseError
+from ..data_model import (TableDataModel,
+                          SqlResultModel,
+                          SqlResultModelAsync,
+                          SqlResultModelTask)
+from .plugin import SLDatabase
 
-from ..data_model import TableDataModel, SqlResultModel
-from ..plugin import DbError
 
 class SLTableDataModel(TableDataModel):
-	def __init__(self, table, parent=None):
-		TableDataModel.__init__(self, table, parent)
 
-		fields_txt = u", ".join(self.fields)
-		table_txt = self.db.quoteId( (self.table.schemaName(), self.table.name) )
+    def __init__(self, table, parent=None):
+        TableDataModel.__init__(self, table, parent)
 
-		# run query and get results
-		sql = u"SELECT %s FROM %s" % (fields_txt, table_txt)
-		c = self.db._get_cursor()
-		self.db._execute(c, sql)
+        fields_txt = u", ".join(self.fields)
+        table_txt = self.db.quoteId((self.table.schemaName(), self.table.name))
 
-		self.resdata = self.db._fetchall(c)
-		c.close()
-		del c
+        # run query and get results
+        sql = u"SELECT %s FROM %s" % (fields_txt, table_txt)
+        c = self.db._get_cursor()
+        self.db._execute(c, sql)
 
-		self.fetchedFrom = 0
-		self.fetchedCount = len(self.resdata)
+        self.resdata = self.db._fetchall(c)
+        c.close()
+        del c
+
+        self.fetchedFrom = 0
+        self.fetchedCount = len(self.resdata)
+
+    def _sanitizeTableField(self, field):
+        # get fields, ignore geometry columns
+        dataType = field.dataType.upper()
+        if dataType[:5] == "MULTI":
+            dataType = dataType[5:]
+        if dataType[-3:] == "25D":
+            dataType = dataType[:-3]
+        if dataType[-10:] == "COLLECTION":
+            dataType = dataType[:-10]
+        if dataType in ["POINT", "LINESTRING", "POLYGON", "GEOMETRY"]:
+            return u'GeometryType(%s)' % self.db.quoteId(field.name)
+        return self.db.quoteId(field.name)
+
+    def rowCount(self, index=None):
+        return self.fetchedCount
 
 
-	def _sanitizeTableField(self, field):
-		# get fields, ignore geometry columns
-		dataType = field.dataType.upper()
-		if dataType[:5] == "MULTI": dataType = dataType[5:]
-		if dataType[-3:] == "25D": dataType = dataType[:-3]
-		if dataType[-10:] == "COLLECTION": dataType = dataType[:-10]
-		if dataType in ["POINT", "LINESTRING", "POLYGON", "GEOMETRY"]:
-			return u'GeometryType(%s)' % self.db.quoteId(field.name)
-		return self.db.quoteId(field.name)
+class SLSqlResultModelTask(SqlResultModelTask):
 
-	def rowCount(self, index=None):
-		return self.fetchedCount
+    def __init__(self, db, sql, parent):
+        super().__init__(db, sql, parent)
+        self.clone = None
+
+    def run(self):
+        try:
+            self.clone = SLDatabase(None, self.db.connector.uri())
+            self.model = SLSqlResultModel(self.clone, self.sql, None)
+        except BaseError as e:
+            self.error = e
+            QgsMessageLog.logMessage(e.msg)
+            return False
+
+        return True
+
+    def cancel(self):
+        if self.clone:
+            self.clone.connector.cancel()
+        SqlResultModelTask.cancel(self)
+
+
+class SLSqlResultModelAsync(SqlResultModelAsync):
+
+    def __init__(self, db, sql, parent):
+        super().__init__()
+
+        self.task = SLSqlResultModelTask(db, sql, parent)
+        self.task.taskCompleted.connect(self.modelDone)
+        self.task.taskTerminated.connect(self.modelDone)
 
 
 class SLSqlResultModel(SqlResultModel):
-	pass
-
+    pass
