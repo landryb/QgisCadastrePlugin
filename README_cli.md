@@ -6,9 +6,10 @@ A partir du [plugin Qadastre pour QGIS] (https://github.com/3liz/QgisCadastrePlu
 Dépendances
 ===========
 
-Sur un système debian jessie, les paquets suivants sont nécessaires :
+Sur un système debian stretch, les paquets suivants sont nécessaires ( a prendre depuis le dépot `qgis-ltr` de https://www.qgis.org/fr/site/forusers/alldownloads.html) :
 ```
-python-qt4 python-pyspatialite python-gdal libqt4-sql-psql libqt4-sql-sqlite python-psycopg2
+python3-qgis
+
 ```
 
 Il faut cloner le repository :
@@ -42,7 +43,7 @@ Import des données
 ==================
 Pour lancer l'import il suffit de lancer cette commande:
 ```
-python do_import.py
+python3 do_import.py
 ```
 
 Le script va lire le fichier *config.ini* dans le répertoire courant, et importer les données dans la base ciblée. La sortie écran est la même que ce qui serait affiché dans le plugin QGIS.
