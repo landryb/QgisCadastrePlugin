@@ -26,7 +26,7 @@ from builtins import range
 # this will disable the dbplugin if the connector raise an ImportError
 from .connector import PostGisDBConnector
 
-from qgis.PyQt.QtCore import Qt, QRegExp, QCoreApplication
+from qgis.PyQt.QtCore import Qt, QRegExp, QCoreApplication, QSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QApplication, QMessageBox
 from qgis.core import Qgis, QgsApplication, QgsSettings
@@ -36,6 +36,7 @@ from ..plugin import ConnectionError, InvalidDataException, DBPlugin, Database, 
     TableField, TableConstraint, TableIndex, TableTrigger, TableRule
 
 import re
+import os
 
 
 def classFactory():
@@ -69,7 +70,7 @@ class PostGisDBPlugin(DBPlugin):
 
     def connect(self, parent=None):
         conn_name = self.connectionName()
-        settings = QgsSettings()
+        settings = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.IniFormat)
         settings.beginGroup(u"/%s/%s" % (self.connectionSettingsKey(), conn_name))
 
         if not settings.contains("database"):  # non-existent entry?
