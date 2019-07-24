@@ -31,7 +31,6 @@ from qgis.core import (
     Qgis,
     QgsApplication,
     QgsSettings,
-    QgsMapLayerType,
     QgsWkbTypes
 )
 from ..db_plugins import createDbPlugin
@@ -279,7 +278,7 @@ class Database(DbItemObject):
         return "row_number() over ()"
 
     def toSqlLayer(self, sql, geomCol, uniqueCol, layerName="QueryLayer", layerType=None, avoidSelectById=False, filter=""):
-        from qgis.core import QgsVectorLayer, QgsRasterLayer
+        from qgis.core import QgsMapLayer, QgsVectorLayer, QgsRasterLayer
 
         if uniqueCol is None:
             if hasattr(self, 'uniqueIdFunction'):
@@ -296,7 +295,7 @@ class Database(DbItemObject):
         if avoidSelectById:
             uri.disableSelectAtId(True)
         provider = self.dbplugin().providerName()
-        if layerType == QgsMapLayerType.RasterLayer:
+        if layerType == QgsMapLayer.RasterLayer:
             return QgsRasterLayer(uri.uri(False), layerName, provider)
         return QgsVectorLayer(uri.uri(False), layerName, provider)
 
@@ -620,7 +619,6 @@ class Schema(DbItemObject):
         ret = self.database().connector.renameSchema(self.name, new_name)
         if ret is not False:
             self.name = new_name
-            # FIXME: refresh triggers
             self.refresh()
         return ret
 
@@ -679,9 +677,6 @@ class Table(DbItemObject):
         ret = self.database().connector.renameTable((self.schemaName(), self.name), new_name)
         if ret is not False:
             self.name = new_name
-            self._triggers = None
-            self._rules = None
-            self._constraints = None
             self.refresh()
         return ret
 
@@ -1135,17 +1130,13 @@ class TableField(TableSubItemObject):
             txt += u" DEFAULT %s" % self.default2String()
         return txt
 
-    def getComment(self):
-        """Returns the comment for a field"""
-        return ''
-
     def delete(self):
         return self.table().deleteField(self)
 
     def rename(self, new_name):
         return self.update(new_name)
 
-    def update(self, new_name, new_type_str=None, new_not_null=None, new_default_str=None, new_comment=None):
+    def update(self, new_name, new_type_str=None, new_not_null=None, new_default_str=None):
         self.table().aboutToChange.emit()
         if self.name == new_name:
             new_name = None
@@ -1155,12 +1146,10 @@ class TableField(TableSubItemObject):
             new_not_null = None
         if self.default2String() == new_default_str:
             new_default_str = None
-        if self.comment == new_comment:
-            # Update also a new_comment
-            new_comment = None
+
         ret = self.table().database().connector.updateTableColumn((self.table().schemaName(), self.table().name),
-                                                                  self.name, new_name, new_type_str,
-                                                                  new_not_null, new_default_str, new_comment)
+                                                                  self.name, new_name, new_type_str, new_not_null,
+                                                                  new_default_str)
         if ret is not False:
             self.table().refreshFields()
         return ret

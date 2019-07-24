@@ -31,8 +31,6 @@ from ..connector import DBConnector
 from ..plugin import ConnectionError, DbError, Table
 
 from qgis.utils import spatialite_connect
-from qgis.core import QgsApplication
-
 import sqlite3
 
 from osgeo import gdal, ogr, osr
@@ -60,10 +58,8 @@ class GPKGDBConnector(DBConnector):
         self.gdal_ds = gdal.OpenEx(self.dbname, gdal.OF_UPDATE)
         if self.gdal_ds is None:
             self.gdal_ds = gdal.OpenEx(self.dbname)
-        if self.gdal_ds is None:
+        if self.gdal_ds is None or self.gdal_ds.GetDriver().ShortName != 'GPKG':
             raise ConnectionError(QApplication.translate("DBManagerPlugin", '"{0}" not found').format(self.dbname))
-        if self.gdal_ds.GetDriver().ShortName != 'GPKG':
-            raise ConnectionError(QApplication.translate("DBManagerPlugin", '"{dbname}" not recognized as GPKG ({shortname} reported instead.)').format(dbname=self.dbname, shortname=self.gdal_ds.GetDriver().ShortName))
         self.has_raster = self.gdal_ds.RasterCount != 0 or self.gdal_ds.GetMetadata('SUBDATASETS') is not None
         self.connection = None
         self._current_thread = None
@@ -615,26 +611,38 @@ class GPKGDBConnector(DBConnector):
         self._execute_and_commit(sql)
 
     def renameTable(self, table, new_table):
-        """Renames the table
+        """ rename a table """
 
-        :param table: tuple with schema and table names
-        :type table: tuple (str, str)
-        :param new_table: new table name
-        :type new_table: str
-        :return: true on success
-        :rtype: bool
-        """
+        if self.isRasterTable(table):
+            return False
 
-        table_name = table[1]
-        provider = [p for p in QgsApplication.dataItemProviderRegistry().providers() if p.name() == 'OGR'][0]
-        collection_item = provider.createDataItem(self.dbname, None)
-        data_item = [c for c in collection_item.createChildren() if c.name() == table_name][0]
-        result = data_item.rename(new_table)
+        _, tablename = self.getSchemaTableName(table)
+        if new_table == tablename:
+            return True
+
+        quoted_table = self.quoteString(tablename)
+        quoted_table_new = self.quoteString(new_table)
+
+        if tablename.find('"') >= 0:
+            tablename = self.quoteId(tablename)
+        if new_table.find('"') >= 0:
+            new_table = self.quoteId(new_table)
+
+        gdal.ErrorReset()
+        self.gdal_ds.ExecuteSQL('ALTER TABLE %s RENAME TO %s' % (tablename, new_table))
+        if gdal.GetLastErrorMsg() != '':
+            return False
+
+        # also rename any styles referring to this table
+        if self.gdal_ds.GetLayerByName('layer_styles'):
+            self.gdal_ds.ExecuteSQL('UPDATE layer_styles SET f_table_name = %s WHERE f_table_name = %s' % (quoted_table_new, quoted_table))
+            if gdal.GetLastErrorMsg() != '':
+                return False
+
         # we need to reopen after renaming since OGR doesn't update its
         # internal state
-        if result:
-            self._opendb()
-        return result
+        self._opendb()
+        return True
 
     def moveTable(self, table, new_table, new_schema=None):
         return self.renameTable(table, new_table)
@@ -667,7 +675,7 @@ class GPKGDBConnector(DBConnector):
             return lyr.DeleteField(idx) == 0
         return False
 
-    def updateTableColumn(self, table, column, new_name, new_data_type=None, new_not_null=None, new_default=None, comment=None):
+    def updateTableColumn(self, table, column, new_name, new_data_type=None, new_not_null=None, new_default=None):
         if self.isGeometryColumn(table, column):
             return False
 

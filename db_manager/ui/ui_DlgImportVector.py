@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/usr/obj/ports/qgis-3.8.1/qgis-3.8.1/python/plugins/db_manager/ui/DlgImportVector.ui'
+# Form implementation generated from reading ui file '/build/qgis-3.4.10+14stretch/python/plugins/db_manager/ui/DlgImportVector.ui'
 #
-# Created by: PyQt5 UI code generator 5.9
+# Created by: PyQt5 UI code generator 5.7
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_DbManagerDlgImportVector(object):
     def setupUi(self, DbManagerDlgImportVector):
         DbManagerDlgImportVector.setObjectName("DbManagerDlgImportVector")
-        DbManagerDlgImportVector.resize(482, 627)
+        DbManagerDlgImportVector.resize(482, 496)
         self.verticalLayout = QtWidgets.QVBoxLayout(DbManagerDlgImportVector)
         self.verticalLayout.setObjectName("verticalLayout")
         self.wdgInput = QtWidgets.QWidget(DbManagerDlgImportVector)
@@ -142,13 +142,6 @@ class Ui_DbManagerDlgImportVector(object):
         self.chkSourceSrid = QtWidgets.QCheckBox(self.groupBox_2)
         self.chkSourceSrid.setObjectName("chkSourceSrid")
         self.gridLayout.addWidget(self.chkSourceSrid, 2, 0, 1, 1)
-        self.chkCom = QtWidgets.QCheckBox(self.groupBox_2)
-        self.chkCom.setObjectName("chkCom")
-        self.gridLayout.addWidget(self.chkCom, 10, 0, 1, 1)
-        self.editCom = QtWidgets.QLineEdit(self.groupBox_2)
-        self.editCom.setEnabled(False)
-        self.editCom.setObjectName("editCom")
-        self.gridLayout.addWidget(self.editCom, 10, 1, 1, 1)
         self.verticalLayout.addWidget(self.groupBox_2)
         self.buttonBox = QtWidgets.QDialogButtonBox(DbManagerDlgImportVector)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
@@ -168,7 +161,6 @@ class Ui_DbManagerDlgImportVector(object):
         self.buttonBox.accepted.connect(DbManagerDlgImportVector.accept)
         self.chkSourceSrid.toggled['bool'].connect(self.widgetSourceSrid.setEnabled)
         self.chkTargetSrid.toggled['bool'].connect(self.widgetTargetSrid.setEnabled)
-        self.chkCom.toggled['bool'].connect(self.editCom.setEnabled)
         QtCore.QMetaObject.connectSlotsByName(DbManagerDlgImportVector)
         DbManagerDlgImportVector.setTabOrder(self.cboInputLayer, self.btnChooseInputFile)
         DbManagerDlgImportVector.setTabOrder(self.btnChooseInputFile, self.chkSelectedFeatures)
@@ -208,6 +200,5 @@ class Ui_DbManagerDlgImportVector(object):
         self.chkLowercaseFieldNames.setText(_translate("DbManagerDlgImportVector", "Convert field names to lowercase"))
         self.chkTargetSrid.setText(_translate("DbManagerDlgImportVector", "Target SRID"))
         self.chkSourceSrid.setText(_translate("DbManagerDlgImportVector", "Source SRID"))
-        self.chkCom.setText(_translate("DbManagerDlgImportVector", "Comment"))
 
 from qgis.gui import QgsProjectionSelectionWidget

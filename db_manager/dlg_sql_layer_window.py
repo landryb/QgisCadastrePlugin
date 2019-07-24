@@ -32,12 +32,7 @@ from qgis.PyQt.QtGui import QKeySequence, QCursor, QClipboard, QIcon, QStandardI
 from qgis.PyQt.Qsci import QsciAPIs
 from qgis.PyQt.QtXml import QDomDocument
 
-from qgis.core import (
-    QgsProject,
-    QgsDataSourceUri,
-    QgsReadWriteContext,
-    QgsMapLayerType
-)
+from qgis.core import QgsProject, QgsDataSourceUri, QgsReadWriteContext
 from qgis.utils import OverrideCursor
 
 from .db_plugins import createDbPlugin
@@ -93,7 +88,7 @@ class DlgSqlLayerWindow(QWidget, Ui_Dialog):
         self.setWindowTitle(
             u"%s - %s [%s]" % (self.windowTitle(), db.connection().connectionName(), db.connection().typeNameString()))
 
-        self.defaultLayerName = self.tr('QueryLayer')
+        self.defaultLayerName = 'QueryLayer'
 
         if self.allowMultiColumnPk:
             self.uniqueColumnCheck.setText(self.tr("Column(s) with unique values"))
@@ -235,6 +230,7 @@ class DlgSqlLayerWindow(QWidget, Ui_Dialog):
 
     def loadPreset(self, name):
         query = QgsProject.instance().readEntry('DBManager', 'savedQueries/' + self.getQueryHash(name) + '/query')[0]
+        name = QgsProject.instance().readEntry('DBManager', 'savedQueries/' + self.getQueryHash(name) + '/name')[0]
         self.editSql.setText(query)
 
     def clearSql(self):
@@ -256,6 +252,7 @@ class DlgSqlLayerWindow(QWidget, Ui_Dialog):
             if old_model:
                 old_model.deleteLater()
 
+            cols = []
             quotedCols = []
 
             try:
@@ -306,7 +303,9 @@ class DlgSqlLayerWindow(QWidget, Ui_Dialog):
         if query.strip().endswith(';'):
             query = query.strip()[:-1]
 
-        layerType = QgsMapLayerType.VectorLayer if self.vectorRadio.isChecked() else QgsMapLayerType.RasterLayer
+        from qgis.core import QgsMapLayer
+
+        layerType = QgsMapLayer.VectorLayer if self.vectorRadio.isChecked() else QgsMapLayer.RasterLayer
 
         # get a new layer name
         names = []
@@ -369,6 +368,7 @@ class DlgSqlLayerWindow(QWidget, Ui_Dialog):
                 query = query.strip()[:-1]
 
             # get all the columns
+            cols = []
             quotedCols = []
             connector = self.db.connector
             if self.aliasSubQuery:
@@ -462,6 +462,10 @@ class DlgSqlLayerWindow(QWidget, Ui_Dialog):
                 items[0].setCheckState(Qt.Checked)
             else:
                 self.uniqueCombo.setEditText(defaultUniqueCol)
+        try:
+            pass
+        except:
+            pass
 
     def copySelectedResults(self):
         if len(self.viewResult.selectedIndexes()) <= 0:

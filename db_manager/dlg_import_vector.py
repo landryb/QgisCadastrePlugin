@@ -25,11 +25,12 @@ from builtins import str
 from builtins import range
 
 from qgis.PyQt.QtCore import Qt, QFileInfo
-from qgis.PyQt.QtWidgets import QDialog, QFileDialog, QMessageBox
+from qgis.PyQt.QtWidgets import QDialog, QFileDialog, QMessageBox, QApplication
+from qgis.PyQt.QtGui import QCursor
 
 from qgis.core import (QgsDataSourceUri,
                        QgsVectorLayer,
-                       QgsMapLayerType,
+                       QgsMapLayer,
                        QgsProviderRegistry,
                        QgsCoordinateReferenceSystem,
                        QgsVectorLayerExporter,
@@ -50,11 +51,6 @@ class DlgImportVector(QDialog, Ui_Dialog):
         self.db = outDb
         self.outUri = outUri
         self.setupUi(self)
-
-        supportCom = self.db.supportsComment()
-        if not supportCom:
-            self.chkCom.setVisible(False)
-            self.editCom.setVisible(False)
 
         self.default_pk = "id"
         self.default_geom = "geom"
@@ -133,7 +129,7 @@ class DlgImportVector(QDialog, Ui_Dialog):
         for nodeLayer in QgsProject.instance().layerTreeRoot().findLayers():
             layer = nodeLayer.layer()
             # TODO: add import raster support!
-            if layer.type() == QgsMapLayerType.VectorLayer:
+            if layer.type() == QgsMapLayer.VectorLayer:
                 self.cboInputLayer.addItem(layer.name(), layer.id())
 
     def deleteInputLayer(self):
@@ -179,7 +175,7 @@ class DlgImportVector(QDialog, Ui_Dialog):
 
             layerName = QFileInfo(filename).completeBaseName()
             layer = QgsVectorLayer(filename, layerName, "ogr")
-            if not layer.isValid() or layer.type() != QgsMapLayerType.VectorLayer:
+            if not layer.isValid() or layer.type() != QgsMapLayer.VectorLayer:
                 layer.deleteLater()
                 return False
 
@@ -373,13 +369,6 @@ class DlgImportVector(QDialog, Ui_Dialog):
         # create spatial index
         if self.chkSpatialIndex.isEnabled() and self.chkSpatialIndex.isChecked():
             self.db.connector.createSpatialIndex((schema, table), geom)
-
-        # add comment on table
-        supportCom = self.db.supportsComment()
-        if self.chkCom.isEnabled() and self.chkCom.isChecked() and supportCom:
-            # using connector executing COMMENT ON TABLE query (with editCome.text() value)
-            com = self.editCom.text()
-            self.db.connector.commentTable(schema, table, com)
 
         self.db.connection().reconnect()
         self.db.refresh()

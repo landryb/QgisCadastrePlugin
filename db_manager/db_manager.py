@@ -29,12 +29,7 @@ from qgis.PyQt.QtWidgets import QMainWindow, QApplication, QMenu, QTabWidget, QG
 from qgis.PyQt.QtGui import QIcon, QKeySequence
 
 from qgis.gui import QgsMessageBar
-from qgis.core import (
-    Qgis,
-    QgsApplication,
-    QgsSettings,
-    QgsMapLayerType
-)
+from qgis.core import Qgis, QgsApplication, QgsSettings, QgsMapLayer
 from qgis.utils import OverrideCursor
 
 from .info_viewer import InfoViewer
@@ -93,8 +88,6 @@ class DBManager(QMainWindow):
         with OverrideCursor(Qt.WaitCursor):
             try:
                 self.reloadButtons()
-                # Force-reload information on the layer
-                self.info.setDirty()
                 # clear preview, this will delete the layer in preview tab
                 self.preview.loadPreview(None)
                 self.refreshTabs()
@@ -177,7 +170,7 @@ class DBManager(QMainWindow):
             return
 
         inLayer = table.toMapLayer()
-        if inLayer.type() != QgsMapLayerType.VectorLayer:
+        if inLayer.type() != QgsMapLayer.VectorLayer:
             self.infoBar.pushMessage(
                 self.tr("Select a vector or a tabular layer you want export."),
                 Qgis.Warning, self.iface.messageTimeout())

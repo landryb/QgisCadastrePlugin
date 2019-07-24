@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/usr/obj/ports/qgis-3.8.1/qgis-3.8.1/python/plugins/db_manager/db_plugins/postgis/plugins/versioning/DlgVersioning.ui'
+# Form implementation generated from reading ui file '/build/qgis-3.4.10+14stretch/python/plugins/db_manager/db_plugins/postgis/plugins/versioning/DlgVersioning.ui'
 #
-# Created by: PyQt5 UI code generator 5.9
+# Created by: PyQt5 UI code generator 5.7
 #
 # WARNING! All changes made in this file will be lost!
 

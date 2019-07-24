@@ -25,12 +25,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QAction, QApplication
 from qgis.PyQt.QtGui import QIcon
 
-from qgis.core import (
-    QgsProject,
-    QgsMapLayerType,
-    QgsDataSourceUri,
-    QgsApplication
-)
+from qgis.core import QgsProject, QgsMapLayer, QgsDataSourceUri, QgsApplication
 
 from . import resources_rc  # NOQA
 
@@ -61,7 +56,7 @@ class DBManagerPlugin(object):
                                    self.iface.mainWindow())
         self.layerAction.setObjectName("dbManagerUpdateSqlLayer")
         self.layerAction.triggered.connect(self.onUpdateSqlLayer)
-        self.iface.addCustomActionForLayerType(self.layerAction, "", QgsMapLayerType.VectorLayer, False)
+        self.iface.addCustomActionForLayerType(self.layerAction, "", QgsMapLayer.VectorLayer, False)
         for l in list(QgsProject.instance().mapLayers().values()):
             self.onLayerWasAdded(l)
         QgsProject.instance().layerWasAdded.connect(self.onLayerWasAdded)
