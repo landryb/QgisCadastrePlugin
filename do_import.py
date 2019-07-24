@@ -49,7 +49,7 @@ from functools import partial
 class cadastre_dialog_cli():
     def __init__(self):
 
-        print "creating instance of dialog_cli"
+        print("creating instance of dialog_cli")
 
 class cadastre_common():
 
@@ -79,14 +79,14 @@ class cadastre_common():
         '''
         Update the log
         '''
-        print msg
+        print(msg)
 
 
     def updateProgressBar(self):
         '''
         Update the progress bar
         '''
-        print 'progress'
+        print('progress')
 
     def updateConnectionList(self):
         '''
@@ -432,7 +432,7 @@ class cadastre_common():
             try:
                 self.updateLog(e.msg)
             except:
-                print e.msg
+                print(e.msg)
             return
 
         finally:
@@ -720,7 +720,7 @@ class cadastre_import_cli(QObject):
 
         cfg = os.getenv('QADASTRECFG','config.ini')
         s = QSettings(cfg, QSettings.IniFormat)
-        print "Using this config file for import parameters: "+cfg
+        print("Using this config file for import parameters: "+cfg)
 
     def onClose(self):
         '''
@@ -752,7 +752,7 @@ class cadastre_import_cli(QObject):
 
     def createSchema(self):
         if self.db == None:
-            print "No database selected or you are not connected to it."
+            print("No database selected or you are not connected to it.")
             return
         schema = self.inDbCreateSchema.text()
 
@@ -785,7 +785,7 @@ class cadastre_import_cli(QObject):
         if projSelector.exec_():
             self.crs = QgsCoordinateReferenceSystem( projSelector.selectedCrsId(), QgsCoordinateReferenceSystem.InternalCrsId )
             if len(projSelector.selectedAuthId()) == 0:
-                print self.tr(u"Aucun système de coordonnée de référence valide n'a été sélectionné")
+                print(self.tr(u"Aucun système de coordonnée de référence valide n'a été sélectionné"))
                 return
             else:
                 self.projSelectors[key]['input'].clear()
@@ -853,7 +853,7 @@ class cadastre_import_cli(QObject):
 
         msg = self.checkImportInputData()
         if msg:
-            print "critical:"+msg
+            print("critical:"+msg)
             return
 
         dbpluginclass = createDbPlugin( self.dbType, self.connectionName )
