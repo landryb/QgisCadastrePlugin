@@ -1006,8 +1006,13 @@ class cadastreImport(QObject):
         if self.go:
 
             # Read sql script
-            sql = open(scriptPath).read()
-            sql = sql.decode("utf-8-sig")
+            sql = ''
+            try:
+                with open(scriptPath, encoding="utf-8-sig") as f:
+                    sql = f.read()
+            except:
+                with open(scriptPath, encoding="ISO-8859-15") as f:
+                    sql = f.read()
 
             # Set schema if needed
             if self.dialog.dbType == 'postgis':
