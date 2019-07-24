@@ -979,14 +979,14 @@ class cadastreImport(QObject):
         if self.go:
 
             try:
-                fin = open(scriptPath)
-                data = fin.read().decode("utf-8-sig")
-                fin.close()
-                fout = open(scriptPath, 'w')
+                data = ''
+                with open(scriptPath, encoding='utf-8-sig') as fin:
+                    data = fin.read() #.decode("utf-8-sig")
+
                 data = self.replaceParametersInString(data, replaceDict)
-                data = data.encode('utf-8')
-                fout.write(data)
-                fout.close()
+                # data = data.encode('utf-8')
+                with open(scriptPath, 'w') as fout:
+                    fout.write(data)
 
             except IOError, e:
                 msg = u"<b>Erreur lors du paramétrage des scripts d'import: %s</b>" % e
