@@ -23,7 +23,7 @@
 """
 
 import os, glob
-import StringIO
+import io
 import string, sys
 import re
 import time
@@ -31,14 +31,16 @@ import tempfile
 import shutil
 from distutils import dir_util
 
-from PyQt4.QtCore import (
+from PyQt5.QtCore import (
     Qt,
     QObject,
     QSettings
 )
-from PyQt4.QtGui import (
+from PyQt5.QtGui import (
     QCursor,
-    QPixmap,
+    QPixmap
+)
+from PyQt5.QtWidgets import (
     QApplication,
     QMessageBox
 )
@@ -53,7 +55,8 @@ from db_manager.db_plugins.plugin import (
 )
 from db_manager.db_plugins import createDbPlugin
 from db_manager.dlg_db_error import DlgDbError
-from pyspatialite import dbapi2 as sqlite
+from qgis.utils import spatialite_connect
+import sqlite3 as sqlite
 
 # Import ogr2ogr.py from processing plugin
 try:
@@ -68,8 +71,6 @@ try:
     from scripts.pyogr.ogr2ogr import main as ogr2ogr
 except ImportError:
     pass
-
-from scripts.pyogr.ogr2ogr import main as ogr2ogr
 
 class cadastreImport(QObject):
 
@@ -266,8 +267,8 @@ class cadastreImport(QObject):
                 self.qc.updateLog('%s' % item['title'])
                 self.updateProgressBar()
                 self.replaceParametersInScript(s, replaceDict)
-                self.executeSqlScript(s, item.has_key('constraints'))
-                if item.has_key('constraints'):
+                self.executeSqlScript(s, 'constraints' in item)
+                if 'constraints' in item:
                     self.hasConstraints = item['constraints']
             self.updateProgressBar()
 
@@ -426,19 +427,19 @@ class cadastreImport(QObject):
         for item in scriptList:
             if self.go:
                 self.qc.updateLog('%s' % item['title'])
-                if item.has_key('script'):
+                if 'script' in item:
                     s = item['script']
                     self.replaceParametersInScript(s, replaceDict)
                     self.updateProgressBar()
-                    if item.has_key('divide'):
-                        self.executeSqlScript(s, True, item.has_key('constraints'))
+                    if 'divide' in item:
+                        self.executeSqlScript(s, True, 'constraints' in item)
                     else:
-                        self.executeSqlScript(s, False, item.has_key('constraints'))
+                        self.executeSqlScript(s, False, 'constraints' in item)
                 else:
                     self.updateProgressBar()
                     item['method']()
 
-                if item.has_key('constraints') \
+                if 'constraints' in item \
                 and not self.dialog.dbType == 'spatialite':
                     self.hasConstraints = item['constraints']
 
@@ -453,8 +454,8 @@ class cadastreImport(QObject):
         Chunks an iterable (file, etc.)
         into pieces
         '''
-        from itertools import izip_longest
-        return izip_longest(*[iter(iterable)]*n, fillvalue=padvalue)
+        from itertools import zip_longest
+        return zip_longest(*[iter(iterable)]*n, fillvalue=padvalue)
 
 
     def importMajicIntoDatabase(self):
@@ -517,18 +518,18 @@ class cadastreImport(QObject):
             return False
 
         # Check if departement and direction are the same for every file
-        if len(depdirs.keys()) > 1:
+        if len(list(depdirs.keys())) > 1:
             self.go = False
             lst = ",<br/> ".join( u"département : %s et direction : %s" % (a[0:2], a[2:3]) for a in depdirs)
             self.qc.updateLog(
                 u"<b>ERREUR : MAJIC - Les données concernent des départements et codes direction différents :</b>\n<br/> %s" %  lst
             )
-            self.qc.updateLog(u"<b>Veuillez réaliser l'import en %s fois.</b>" % len( depdirs.keys() ) )
+            self.qc.updateLog(u"<b>Veuillez réaliser l'import en %s fois.</b>" % len( list(depdirs.keys()) ) )
             return False
 
         # Check if departement and direction are different from those given by the user in dialog
-        fDep = depdirs.keys()[0][0:2]
-        fDir = depdirs.keys()[0][2:3]
+        fDep = list(depdirs.keys())[0][0:2]
+        fDir = list(depdirs.keys())[0][2:3]
         if self.dialog.edigeoDepartement != fDep or self.dialog.edigeoDirection != fDir:
             msg = u"<b>ERREUR : MAJIC - Les numéros de département et de direction trouvés dans les fichiers ne correspondent pas à ceux renseignés dans les options du dialogue d'import:<b>\n<br/>* fichiers : %s et %s <br/>* options : %s et %s" % (
                 fDep,
@@ -663,8 +664,8 @@ class cadastreImport(QObject):
                 s = item['script']
                 self.replaceParametersInScript(s, replaceDict)
                 self.updateProgressBar()
-                self.executeSqlScript(s, item.has_key('divide'), item.has_key('constraints'))
-                if item.has_key('constraints'):
+                self.executeSqlScript(s, 'divide' in item, 'constraints' in item)
+                if 'constraints' in item:
                     self.hasConstraints = item['constraints']
                 self.updateTimer()
             self.updateProgressBar()
@@ -755,8 +756,8 @@ class cadastreImport(QObject):
                 self.replaceParametersInScript(s, replaceDict)
                 self.updateProgressBar()
 
-                self.executeSqlScript(s, item.has_key('divide'), item.has_key('constraints'))
-                if item.has_key('constraints'):
+                self.executeSqlScript(s, 'divide' in item, 'constraints' in item)
+                if 'constraints' in item:
                     self.hasConstraints = item['constraints']
 
                 self.updateTimer()
@@ -807,7 +808,7 @@ class cadastreImport(QObject):
                 if os.path.exists(rep):
                     shutil.rmtree(rep)
                     rmt = 1
-        except IOError, e:
+        except IOError as e:
             delmsg = u"<b>Erreur lors de la suppression des répertoires temporaires: %s</b>" % e
             self.qc.updateLog(delmsg)
             self.go = False
@@ -872,8 +873,8 @@ class cadastreImport(QObject):
             # copy script directory
             try:
                 dir_util.copy_tree(source, target)
-                os.chmod(target, 0777)
-            except IOError, e:
+                os.chmod(target, 0o777)
+            except IOError as e:
                 msg = u"<b>Erreur lors de la copie des scripts d'import: %s</b>" % e
                 return msg
 
@@ -930,7 +931,7 @@ class cadastreImport(QObject):
                         myzip.extractall(inner_folder)
                     try:
                         os.remove(filename)
-                    except OSError, e:
+                    except OSError as e:
                         self.qc.updateLog( "<b>Erreur lors de la suppression de %s</b>" % str(filename))
                         pass # in Windows, sometime file is not unlocked
                     i+=1
@@ -953,11 +954,11 @@ class cadastreImport(QObject):
                         t.close()
                     try:
                         os.remove(z)
-                    except OSError, e:
+                    except OSError as e:
                         self.qc.updateLog( "<b>Erreur lors de la suppression de %s</b>" % str(z))
                         pass # in Windows, sometime file is not unlocked
 
-            except IOError, e:
+            except IOError as e:
                 msg = u"<b>Erreur lors de l'extraction des fichiers EDIGEO</b>"
                 self.go = False
                 self.qc.updateLog(msg)
@@ -970,7 +971,7 @@ class cadastreImport(QObject):
         '''
 
         def replfunc(match):
-            if replaceDict.has_key(match.group(0)):
+            if match.group(0) in replaceDict:
                 return replaceDict[match.group(0)]
             else:
                 return None
@@ -998,7 +999,7 @@ class cadastreImport(QObject):
                 with open(scriptPath, 'w') as fout:
                     fout.write(data)
 
-            except IOError, e:
+            except IOError as e:
                 msg = u"<b>Erreur lors du paramétrage des scripts d'import: %s</b>" % e
                 self.go = False
                 self.qc.updateLog(msg)
@@ -1006,7 +1007,6 @@ class cadastreImport(QObject):
 
 
         return None
-
 
     def executeSqlScript(self, scriptPath, divide=False, ignoreError=False):
         '''
@@ -1098,7 +1098,7 @@ class cadastreImport(QObject):
 
             if self.dialog.dbType == 'postgis':
                 try:
-                    c = self.connector._execute_and_commit(sql.encode('utf-8'))
+                    c = self.connector._execute_and_commit(sql)
                 except BaseError as e:
                     if not ignoreError \
                     and not re.search(r'ADD COLUMN tempo_import', sql, re.IGNORECASE) \
@@ -1312,7 +1312,7 @@ class cadastreImport(QObject):
                 # but only prints the error before returning False
                 stdout = sys.stdout
                 try:
-                    sys.stdout = file = StringIO.StringIO()
+                    sys.stdout = file = io.StringIO()
                     self.go = ogr2ogr(cmdArgs)
                     printedString = file.getvalue()
                 finally:
@@ -1337,10 +1337,17 @@ class cadastreImport(QObject):
         '''
         if self.go:
             reg = '^RID[a-zA-z]{1}[a-zA-z]{1}[0-9]{2}:(Rel_.+)_(Objet_[0-9]+)_(Objet_[0-9]+)'
-            with open(path) as inputFile:
-                # Get a list of RID relations combining a "Rel" and two "_Objet"
-                l = [ a[0] for a in [re.findall(r'%s' % reg, line) for line in inputFile] if a]
+            l = None
+            try:
+                with open(path) as inputFile:
+                    # Get a list of RID relations combining a "Rel" and two "_Objet"
+                    l = [ a[0] for a in [re.findall(r'%s' % reg, line) for line in inputFile] if a]
+            except:
+                with open(path, encoding="ISO-8859-15") as inputFile:
+                    # Get a list of RID relations combining a "Rel" and two "_Objet"
+                    l = [ a[0] for a in [re.findall(r'%s' % reg, line) for line in inputFile] if a]
 
+            if l:
                 # Create a sql script to insert all items
                 if self.dialog.dbType == 'postgis':
                     sql="BEGIN;"
@@ -1411,7 +1418,7 @@ class cadastreImport(QObject):
         dic = getMultiPolygon( path )
         if dic:
             # Loop for each layer found in VEC with multi-polygon to update
-            for layer, item in dic.items():
+            for layer, item in list(dic.items()):
                 table = layer.lower()
 
                 # do the changes only for polygon layers
@@ -1425,7 +1432,7 @@ class cadastreImport(QObject):
 
                 # Build SQL
                 sql = ''
-                for obj, wkt in item.items():
+                for obj, wkt in list(item.items()):
                     self.multiPolygonUpdated+=1
                     sql+= " UPDATE %s SET geom = ST_Transform(ST_GeomFromText('%s', %s), %s)" % (
                         table,
