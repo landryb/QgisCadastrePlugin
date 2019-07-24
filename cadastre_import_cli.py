@@ -188,7 +188,7 @@ class cadastreImport(QObject):
         '''
         Update the progress bar
         '''
-        print ".",
+        print(".")
 
     def updateTimer(self):
         '''
@@ -513,7 +513,7 @@ class cadastreImport(QObject):
                 self.dialog.majicSourceDir,
                 ', '.join([a['value'].upper() for a in self.majicSourceFileNames])
             )
-            print msg;
+            print(msg);
             return False
 
         # Check if departement and direction are the same for every file
@@ -536,7 +536,7 @@ class cadastreImport(QObject):
                 self.dialog.edigeoDepartement,
                 self.dialog.edigeoDirection
             )
-            print msg;
+            print(msg);
             return False
 
         # 2nd path to insert data
@@ -1089,7 +1089,7 @@ class cadastreImport(QObject):
                     and not re.search(r'ADD COLUMN tempo_import', sql, re.IGNORECASE) \
                     and not re.search(r'CREATE INDEX ', sql, re.IGNORECASE):
                         self.qc.updateLog(e.msg)
-                        print e.msg
+                        print(e.msg)
                 except UnicodeDecodeError as e:
                     try:
                         c = self.connector._execute_and_commit(sql)
@@ -1098,7 +1098,7 @@ class cadastreImport(QObject):
                         and not re.search(r'ADD COLUMN tempo_import', sql, re.IGNORECASE) \
                         and not re.search(r'CREATE INDEX ', sql, re.IGNORECASE):
                             self.qc.updateLog(e.msg)
-                            print e.msg
+                            print(e.msg)
                 finally:
                     if c:
                         try:
@@ -1106,7 +1106,8 @@ class cadastreImport(QObject):
                             del c
                         except:
                             self.qc.updateLog("issue closing connection")
-                            print "issue closing connection"
+                            # fix_print_with_import
+                            print("issue closing connection")
                             pass
 
             if self.dialog.dbType == 'spatialite':
@@ -1126,7 +1127,8 @@ class cadastreImport(QObject):
                             regex = re.compile(motif, re.I)  # re.I: ignore casse
                             a = regex.search(item) is not None
                         except Exception as e:
-                            print e.msg
+                            # fix_print_with_import
+                            print(e.msg)
                         return a
 
                     c.connection.create_function('regexp', 2, regexp);
@@ -1152,7 +1154,8 @@ class cadastreImport(QObject):
                             del c
                         except:
                             self.qc.updateLog("issue closing connection")
-                            print "issue closing connection"
+                            # fix_print_with_import
+                            print("issue closing connection")
                             pass
 
 
@@ -1178,9 +1181,9 @@ class cadastreImport(QObject):
             thfList = list(set(thfList1) | set(thfList2))
             self.step = 0
             self.totalSteps = len(thfList)
-            print "%s files to go" % self.totalSteps
+            print ("%s files to go" % self.totalSteps)
             for thf in thfList:
-                print "importing thf %s" % thf
+                print ("importing thf %s" % thf)
                 self.importEdigeoThfToDatabase(thf)
                 self.updateProgressBar()
                 if not self.go:
@@ -1197,9 +1200,9 @@ class cadastreImport(QObject):
             vecList = list(set(vecList1) | set(vecList2))
             self.step = 0
             self.totalSteps = len(vecList)
-            print "%s files to go" % self.totalSteps
+            print ("%s files to go" % self.totalSteps)
             for vec in vecList:
-                print "importing vec %s" % vec
+                print ("importing vec %s" % vec)
                 # import via ogr2ogr
                 self.importEdigeoVecToDatabase(vec)
                 # update mission multipolygons (ogr2ogr driver does not handle them yet)
