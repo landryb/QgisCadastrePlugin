@@ -26,20 +26,12 @@ from builtins import next
 from builtins import str
 from hashlib import md5
 
-import os
-
-from qgis.PyQt.QtCore import Qt, pyqtSignal, QDir
-from qgis.PyQt.QtWidgets import QDialog, QWidget, QAction, QApplication, QInputDialog, QStyledItemDelegate, QTableWidgetItem, QFileDialog
+from qgis.PyQt.QtCore import Qt, pyqtSignal
+from qgis.PyQt.QtWidgets import QDialog, QWidget, QAction, QApplication, QInputDialog, QStyledItemDelegate, QTableWidgetItem
 from qgis.PyQt.QtGui import QKeySequence, QCursor, QClipboard, QIcon, QStandardItemModel, QStandardItem
 from qgis.PyQt.Qsci import QsciAPIs
 
-from qgis.core import (
-    QgsProject,
-    QgsApplication,
-    QgsTask,
-    QgsSettings,
-    QgsMapLayerType
-)
+from qgis.core import QgsProject, QgsApplication, QgsTask, QgsSettings
 from qgis.utils import OverrideCursor
 
 from .db_plugins.plugin import BaseError
@@ -79,7 +71,7 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
         self.setWindowTitle(
             self.tr(u"{0} - {1} [{2}]").format(self.windowTitle(), self.connectionName, self.dbType))
 
-        self.defaultLayerName = self.tr('QueryLayer')
+        self.defaultLayerName = 'QueryLayer'
 
         if self.allowMultiColumnPk:
             self.uniqueColumnCheck.setText(self.tr("Column(s) with unique values"))
@@ -104,7 +96,11 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
 
         self.btnCancel.setEnabled(False)
         self.btnCancel.clicked.connect(self.executeSqlCanceled)
-        self.btnCancel.setShortcut(QKeySequence.Cancel)
+        try:
+            self.btnCancel.setShortcut(QKeySequence.Cancel)
+        except AttributeError:
+            # QKeySequence.Cancel only available in Qt >= 5.6
+            pass
         self.progressBar.setEnabled(False)
         self.progressBar.setRange(0, 100)
         self.progressBar.setValue(0)
@@ -123,8 +119,6 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
         self.btnClear.clicked.connect(self.clearSql)
 
         self.presetStore.clicked.connect(self.storePreset)
-        self.presetSaveAsFile.clicked.connect(self.saveAsFilePreset)
-        self.presetLoadFile.clicked.connect(self.loadFilePreset)
         self.presetDelete.clicked.connect(self.deletePreset)
         self.presetCombo.activated[str].connect(self.loadPreset)
         self.presetCombo.activated[str].connect(self.presetName.setText)
@@ -233,47 +227,6 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
         else:
             self.presetCombo.setCurrentIndex(index)
 
-    def saveAsFilePreset(self):
-        settings = QgsSettings()
-        lastDir = settings.value('DB_Manager/lastDirSQLFIle', "")
-
-        query = self._getSqlQuery()
-        if query == "":
-            return
-
-        filename, _ = QFileDialog.getSaveFileName(
-            self,
-            self.tr('Save SQL Query'),
-            lastDir,
-            self.tr("SQL File (*.sql, *.SQL)"))
-
-        if filename:
-            if not filename.lower().endswith('.sql'):
-                filename += ".sql"
-
-            with open(filename, 'w') as f:
-                f.write(query)
-                lastDir = os.path.dirname(filename)
-                settings.setValue('DB_Manager/lastDirSQLFile', lastDir)
-
-    def loadFilePreset(self):
-        settings = QgsSettings()
-        lastDir = settings.value('DB_Manager/lastDirSQLFIle', "")
-
-        filename, _ = QFileDialog.getOpenFileName(
-            self,
-            self.tr("Load SQL Query"),
-            lastDir,
-            self.tr("SQL File (*.sql, *.SQL)"))
-
-        if filename:
-            with open(filename, 'r') as f:
-                self.editSql.clear()
-                for line in f:
-                    self.editSql.insertText(line)
-                lastDir = os.path.dirname(filename)
-                settings.setValue('DB_Manager/lastDirSQLFile', lastDir)
-
     def deletePreset(self):
         name = self.presetCombo.currentText()
         QgsProject.instance().removeEntry('DBManager', 'savedQueries/' + self.getQueryHash(name))
@@ -282,6 +235,7 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
 
     def loadPreset(self, name):
         query = QgsProject.instance().readEntry('DBManager', 'savedQueries/' + self.getQueryHash(name) + '/query')[0]
+        name = QgsProject.instance().readEntry('DBManager', 'savedQueries/' + self.getQueryHash(name) + '/name')[0]
         self.editSql.setText(query)
 
     def loadAsLayerToggled(self, checked):
@@ -338,6 +292,7 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
         with OverrideCursor(Qt.WaitCursor):
             if self.modelAsync.task.status() == QgsTask.Complete:
                 model = self.modelAsync.model
+                cols = []
                 quotedCols = []
 
                 self.viewResult.setModel(model)
@@ -354,6 +309,7 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
                 DlgDbError.showError(self.modelAsync.error, self)
                 self.uniqueModel.clear()
                 self.geomCombo.clear()
+                pass
 
     def executeSql(self):
 
@@ -407,7 +363,9 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
         if query.strip().endswith(';'):
             query = query.strip()[:-1]
 
-        layerType = QgsMapLayerType.VectorLayer if self.vectorRadio.isChecked() else QgsMapLayerType.RasterLayer
+        from qgis.core import QgsMapLayer
+
+        layerType = QgsMapLayer.VectorLayer if self.vectorRadio.isChecked() else QgsMapLayer.RasterLayer
 
         # get a new layer name
         names = []
@@ -452,6 +410,7 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
                 query = query.strip()[:-1]
 
             # get all the columns
+            cols = []
             quotedCols = []
             connector = self.db.connector
             if self.aliasSubQuery:
@@ -545,6 +504,10 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
                 items[0].setCheckState(Qt.Checked)
             else:
                 self.uniqueCombo.setEditText(defaultUniqueCol)
+        try:
+            pass
+        except:
+            pass
 
     def copySelectedResults(self):
         if len(self.viewResult.selectedIndexes()) <= 0:
@@ -570,7 +533,7 @@ class DlgSqlWindow(QWidget, Ui_Dialog):
             dictionary = getSqlDictionary()
 
         wordlist = []
-        for value in dictionary.values():
+        for _, value in dictionary.items():
             wordlist += value  # concat lists
         wordlist = list(set(wordlist))  # remove duplicates
 
