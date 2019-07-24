@@ -27,8 +27,8 @@ import os.path
 import operator
 import re
 import tempfile
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 import unicodedata
 
 import sys
