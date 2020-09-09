@@ -550,7 +550,7 @@ class cadastreImport(QObject):
                 self.qc.updateLog(fpath)
 
                 # read file content
-                with open(fpath) as fin:
+                with open(fpath, encoding='ascii', errors='replace') as fin:
                     # Divide file into chuncks
                     for a in self.chunk(fin, self.maxInsertRows):
                         # Build sql INSERT query depending on database
