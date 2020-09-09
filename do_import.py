@@ -751,7 +751,7 @@ class cadastre_import_cli(QObject):
 
 
     def createSchema(self):
-        if self.db == None:
+        if self.db is None:
             print("No database selected or you are not connected to it.")
             return
         schema = self.inDbCreateSchema.text()
