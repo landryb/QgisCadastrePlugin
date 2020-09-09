@@ -58,7 +58,7 @@ try:
 except ImportError:
     pass
 try:
-    from scripts.pyogr.ogr2ogr import main as ogr2ogr
+    from cadastre.scripts.pyogr.ogr2ogr import main as ogr2ogr
 except ImportError:
     pass
 
@@ -72,7 +72,7 @@ class cadastreImport(QObject):
 
         self.db = self.dialog.db
         self.connector = self.db.connector
-        self.pScriptSourceDir = os.path.join(self.qc.plugin_dir, 'scripts/plugin')
+        self.pScriptSourceDir = os.path.join(self.qc.plugin_dir, 'cadastre/scripts/plugin')
 
         # projections
         if self.dialog.doEdigeoImport:
@@ -1387,7 +1387,7 @@ class cadastreImport(QObject):
         sqlList = []
 
         # Class wich get multipolygons
-        from getmultipolygonfromvec import GetMultiPolygonFromVec
+        from cadastre.getmultipolygonfromvec import GetMultiPolygonFromVec
         getMultiPolygon = GetMultiPolygonFromVec()
 
         # Relations between edigeo import tables and geo_* cadastre table
