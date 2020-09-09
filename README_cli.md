@@ -6,7 +6,7 @@ A partir du [plugin Qadastre pour QGIS] (https://github.com/3liz/QgisCadastrePlu
 Dépendances
 ===========
 
-Sur un système debian stretch, les paquets suivants sont nécessaires ( a prendre depuis le dépot `qgis-ltr` de https://www.qgis.org/fr/site/forusers/alldownloads.html) :
+Sur un système debian buster, les paquets suivants sont nécessaires ( a prendre depuis le dépot `qgis-ltr` de https://www.qgis.org/fr/site/forusers/alldownloads.html) :
 ```
 python3-qgis
 
@@ -14,7 +14,7 @@ python3-qgis
 
 Il faut cloner le repository :
 ```
-git clone -b import_cli https://github.com/landryb/QgisCadastrePlugin.git
+git clone -b import_cli_qgis3 https://github.com/landryb/QgisCadastrePlugin.git
 cd QgisCadastrePlugin
 ```
 
@@ -36,7 +36,7 @@ connections\qadastre\geometryColumnsOnly=false
 connections\qadastre\save=true
 ```
 
-Ce fichier de configuration à la même syntaxe/structure que le fichier de configuration de QGIS qui sauvegarde les paramètres du plugin cadastre, que vous pouvez trouver dans .config/QGIS/QGIS2.conf sur un système unix. Uniquement les sections *cadastre* et *PostgreSQL* sont nécessaires pour le fonctionnement de l'import avec la ligne de commande, la section *cadastre* regroupe les paramètres que l'on renseigne habituellement dans le plugin: noms des fichiers MAJIC, chemins des répertoires contenant les données, millésimes, etc..
+Ce fichier de configuration à la même syntaxe/structure que le fichier de configuration de QGIS qui sauvegarde les paramètres du plugin cadastre, que vous pouvez trouver dans .local/share/QGIS/QGIS3/profiles/default/QGIS/QGIS3.ini sur un système unix. Uniquement les sections *cadastre* et *PostgreSQL* sont nécessaires pour le fonctionnement de l'import avec la ligne de commande, la section *cadastre* regroupe les paramètres que l'on renseigne habituellement dans le plugin: noms des fichiers MAJIC, chemins des répertoires contenant les données, millésimes, etc..
 
 
 Import des données
