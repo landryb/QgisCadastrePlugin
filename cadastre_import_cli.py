@@ -1253,7 +1253,7 @@ class cadastreImport(QObject):
             filename = os.path.normpath(filename)
             if self.dialog.dbType == 'postgis':
                 if not settings.contains( "database" ): # non-existent entry?
-                    raise InvalidDataException( self.tr('There is no defined database connection "%s".') % conn_name )
+                    raise Exception( self.tr('There is no defined database connection "%s".') % conn_name )
                 settingsList = ["host", "database", "username", "password"]
                 host, database, username, password = map(lambda x: settings.value(x, type=str), settingsList)
                 port = settings.value("port", type=int)
@@ -1284,7 +1284,7 @@ class cadastreImport(QObject):
             if self.dialog.dbType == 'spatialite':
                 if not settings.contains( "sqlitepath" ): # non-existent entry?
                     self.go = False
-                    raise InvalidDataException( u'there is no defined database connection "%s".' % conn_name )
+                    raise Exception( u'there is no defined database connection "%s".' % conn_name )
 
                 database = settings.value("sqlitepath")
 
