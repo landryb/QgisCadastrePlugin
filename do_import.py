@@ -51,7 +51,9 @@ class cadastre_dialog_cli():
 
         print("creating instance of dialog_cli")
 
-class cadastre_common():
+class CadastreCommon():
+
+    """ Import data from EDIGEO and MAJIC files. """
 
     def __init__(self, dialog):
 
@@ -690,7 +692,7 @@ class cadastre_import_cli(QObject):
 
         self.connectionDbList = []
         # common cadastre methods
-        self.qc = cadastre_common(self)
+        self.qc = CadastreCommon(self)
 
         # Set initial values
         self.doMajicImport = False
