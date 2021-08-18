@@ -196,10 +196,10 @@ class CadastreCommon():
         hasMajicDataParcelle = False
         hasMajicDataVoie = False
 
-        searchTable = u'geo_commune'
-        majicTableParcelle = u'parcelle'
-        majicTableProp = u'proprietaire'
-        majicTableVoie = u'voie'
+        searchTable = 'geo_commune'
+        majicTableParcelle = 'parcelle'
+        majicTableProp = 'proprietaire'
+        majicTableVoie = 'voie'
         if self.dialog.db:
             if self.dialog.dbType == 'postgis':
                 schemaSearch = [s for s in self.dialog.db.schemas() if s.name == self.dialog.schema]
@@ -213,35 +213,35 @@ class CadastreCommon():
                 # Check for data in it
                 sql = 'SELECT * FROM "%s" LIMIT 1' % searchTable
                 if self.dialog.dbType == 'postgis':
-                    sql = self.setSearchPath(sql, self.dialog.schema)
-                [header, data, rowCount] = self.fetchDataFromSqlQuery(self.dialog.db.connector, sql)
-                if rowCount >= 1:
+                    sql = 'SELECT * FROM "{}"."{}" LIMIT 1'.format(self.dialog.schema, searchTable)
+                data, rowCount, ok = CadastreCommon.fetchDataFromSqlQuery(self.dialog.db.connector, sql)
+                if ok and rowCount >= 1:
                     hasData = True
 
                 # Check for Majic data in it
                 sql = 'SELECT * FROM "%s" LIMIT 1' % majicTableParcelle
                 if self.dialog.dbType == 'postgis':
-                    sql = self.setSearchPath(sql, self.dialog.schema)
-                [header, data, rowCount] = self.fetchDataFromSqlQuery(self.dialog.db.connector, sql)
-                if rowCount >= 1:
+                    sql = 'SELECT * FROM "{}"."{}" LIMIT 1'.format(self.dialog.schema, majicTableParcelle)
+                data, rowCount, ok = CadastreCommon.fetchDataFromSqlQuery(self.dialog.db.connector, sql)
+                if ok and rowCount >= 1:
                     hasMajicData = True
                     hasMajicDataParcelle = True
 
                 # Check for Majic data in it
                 sql = 'SELECT * FROM "%s" LIMIT 1' % majicTableProp
                 if self.dialog.dbType == 'postgis':
-                    sql = self.setSearchPath(sql, self.dialog.schema)
-                [header, data, rowCount] = self.fetchDataFromSqlQuery(self.dialog.db.connector, sql)
-                if rowCount >= 1:
+                    sql = 'SELECT * FROM "{}"."{}" LIMIT 1'.format(self.dialog.schema, majicTableProp)
+                data, rowCount, ok = CadastreCommon.fetchDataFromSqlQuery(self.dialog.db.connector, sql)
+                if ok and rowCount >= 1:
                     hasMajicData = True
                     hasMajicDataProp = True
 
                 # Check for Majic data in it
                 sql = 'SELECT * FROM "%s" LIMIT 1' % majicTableVoie
                 if self.dialog.dbType == 'postgis':
-                    sql = self.setSearchPath(sql, self.dialog.schema)
-                [header, data, rowCount] = self.fetchDataFromSqlQuery(self.dialog.db.connector, sql)
-                if rowCount >= 1:
+                    sql = 'SELECT * FROM "{}"."{}" LIMIT 1'.format(self.dialog.schema, majicTableVoie)
+                data, rowCount, ok = CadastreCommon.fetchDataFromSqlQuery(self.dialog.db.connector, sql)
+                if ok and rowCount >= 1:
                     hasMajicData = True
                     hasMajicDataVoie = True
 
