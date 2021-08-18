@@ -24,28 +24,23 @@
 
 import csv
 import os.path
-import operator
 import re
-import tempfile
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
 import unicodedata
 
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/forms")
+from collections import namedtuple
+from pathlib import Path
 
-from db_manager.db_plugins.plugin import DBPlugin, Schema, Table
 from db_manager.db_plugins import createDbPlugin
-from db_manager.db_plugins.postgis.connector import PostGisDBConnector
+from db_manager.db_plugins.plugin import BaseError
+from db_manager.dlg_db_error import DlgDbError
+from qgis.core import QgsMapLayer, QgsProject, QgsSettings
+from qgis.PyQt.QtCore import QObject, QSettings, QFileInfo, Qt
+from qgis.PyQt.QtGui import QTextCursor
+from qgis.PyQt.QtWidgets import QApplication, QFileDialog, qApp
+
+import cadastre.cadastre_common_base as common_utils
 
 from cadastre_import_cli import cadastreImport
-
-from functools import partial
-
-# --------------------------------------------------------
-#        import - Import data from EDIGEO and MAJIC files
-# --------------------------------------------------------
-
 class cadastre_dialog_cli():
     def __init__(self):
 
