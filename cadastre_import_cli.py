@@ -570,6 +570,7 @@ class cadastreImport(QObject):
 
         if self.go:
             # unzip edigeo files in temp dir
+            self.qc.updateLog('Extraction des fichiers')
             self.updateProgressBar()
             self.unzipFolderContent(self.dialog.edigeoSourceDir)
             self.updateTimer()
