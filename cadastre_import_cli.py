@@ -85,7 +85,7 @@ class cadastreImport(QObject):
             if self.sourceAuth == 'IGNF':
                 sqlsearch = '%%AUTHORITY["IGNF","%s"]%%' % self.sourceSrid.upper()
                 sql = "SELECT auth_srid FROM spatial_ref_sys WHERE auth_name='IGNF' AND  srtext LIKE '%s' LIMIT 1" % sqlsearch
-                [header, data, rowCount, ok] = cadastre_common.fetchDataFromSqlQuery(self.connector,sql)
+                data, rowCount, ok = CadastreCommon.fetchDataFromSqlQuery(self.connector, sql)
                 if rowCount == 1:
                     for line in data:
                         self.sourceSrid = str(line[0])
@@ -536,7 +536,7 @@ class cadastreImport(QObject):
                         # Build sql INSERT query depending on database
                         if self.dialog.dbType == 'postgis':
                             sql = "BEGIN;"
-                            sql = self.qc.setSearchPath(sql, self.dialog.schema)
+                            sql = CadastreCommon.setSearchPath(sql, self.dialog.schema)
                             # Build INSERT list
                             sql += '\n'.join(
                                 [
@@ -788,13 +788,13 @@ class cadastreImport(QObject):
             sql = 'DELETE FROM geo_label WHERE NOT MbrWithin(geom, ( SELECT ST_Buffer(ST_Envelope(Collect(geom)), 100 ) AS geom FROM geo_commune ));'
         else:
             sql = 'DELETE FROM geo_label WHERE NOT ST_Within(geom, ( SELECT ST_Buffer(ST_Envelope(ST_Collect(geom)), 100 ) AS geom FROM geo_commune ));'
-            sql = self.qc.setSearchPath(sql, self.dialog.schema)
+            sql = CadastreCommon.setSearchPath(sql, self.dialog.schema)
         self.executeSqlQuery(sql)
 
         # Add parcelle_info index for postgis only (not capability of that type for spatialite)
         if self.dialog.dbType == 'postgis':
             sql = 'DROP INDEX IF EXISTS parcelle_info_geo_parcelle_sub;CREATE INDEX parcelle_info_geo_parcelle_sub ON parcelle_info( substr("geo_parcelle", 1, 10));'
-            sql = self.qc.setSearchPath(sql, self.dialog.schema)
+            sql = CadastreCommon.setSearchPath(sql, self.dialog.schema)
             self.executeSqlQuery(sql)
 
             # Add index on geo_parcelle and geo_batiment centroids
@@ -804,7 +804,7 @@ class cadastreImport(QObject):
             CREATE INDEX geo_parcelle_centroide_geom_idx ON geo_parcelle USING gist (ST_Centroid(geom));
             CREATE INDEX geo_batiment_centroide_geom_idx ON geo_batiment USING gist (ST_Centroid(geom));
             '''
-            sql = self.qc.setSearchPath(sql, self.dialog.schema)
+            sql = CadastreCommon.setSearchPath(sql, self.dialog.schema)
             self.executeSqlQuery(sql)
 
         # Refresh spatialite layer statistics
@@ -993,7 +993,7 @@ class cadastreImport(QObject):
 
             # Set schema if needed
             if self.dialog.dbType == 'postgis':
-                sql = self.qc.setSearchPath(sql, self.dialog.schema)
+                sql = CadastreCommon.setSearchPath(sql, self.dialog.schema)
 
             # Remove make valid if asked
             if not self.dialog.edigeoMakeValid:
@@ -1009,8 +1009,8 @@ class cadastreImport(QObject):
 
             # Convert SQL into spatialite syntax
             if self.dialog.dbType == 'spatialite':
-                sql = self.qc.postgisToSpatialite(sql, self.targetSrid)
-                sql = self.qc.postgisToSpatialiteLocal10(sql, self.dialog.dataYear)
+                sql = CadastreCommon.postgisToSpatialite(sql, self.targetSrid)
+                sql = CadastreCommon.postgisToSpatialiteLocal10(sql, self.dialog.dataYear)
 
             # Execute query
             if not divide:
@@ -1354,7 +1354,7 @@ class cadastreImport(QObject):
         # Run each query
         for sql in sqlList:
             if self.dialog.dbType == 'postgis':
-                sql = self.qc.setSearchPath(sql, self.dialog.schema)
+                sql = CadastreCommon.setSearchPath(sql, self.dialog.schema)
             self.executeSqlQuery(sql)
 
     def getUpdateMultipolygonFromVecQuery(self, path, layerType='edigeo'):
@@ -1462,5 +1462,5 @@ class cadastreImport(QObject):
             for table in edigeoImportTables:
                 sql += 'DROP TABLE IF EXISTS "%s";' % table
             if self.dialog.dbType == 'postgis':
-                sql = self.qc.setSearchPath(sql, self.dialog.schema)
+                sql = CadastreCommon.setSearchPath(sql, self.dialog.schema)
             self.executeSqlQuery(sql)
