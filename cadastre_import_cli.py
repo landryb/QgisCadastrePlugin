@@ -56,7 +56,7 @@ class cadastreImport(QObject):
 
         self.db = self.dialog.db
         self.connector = self.db.connector
-        self.pScriptSourceDir = os.path.join(self.qc.plugin_dir, 'cadastre/scripts/plugin')
+        self.pScriptSourceDir = os.path.join(self.qc.plugin_dir, 'QgisCadastrePlugin/cadastre/scripts/plugin')
 
         # projections
         if self.dialog.doEdigeoImport:
