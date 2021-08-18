@@ -162,7 +162,7 @@ class cadastreImport(QObject):
         """
         Update the progress bar
         """
-        print(".")
+        #print(".")
 
     def updateTimer(self):
         """
