@@ -265,8 +265,8 @@ class CadastreCommon():
         if self.dialog.dbType == 'spatialite':
             sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='%s'" % tableName
 
-        [header, data, rowCount] = self.fetchDataFromSqlQuery(self.dialog.db.connector, sql)
-        if rowCount >= 1:
+        data, rowCount, ok = CadastreCommon.fetchDataFromSqlQuery(self.dialog.db.connector, sql)
+        if ok and rowCount >= 1:
             tableExists = True
 
         return tableExists
