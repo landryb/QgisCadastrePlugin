@@ -99,14 +99,14 @@ class cadastre_common():
         if self.dialog.liDbType.currentIndex() != 0:
             self.dialog.dbType = dbType
             # instance of db_manager plugin class
-            dbpluginclass = createDbPlugin( dbType )
+            dbpluginclass = createDbPlugin(dbType)
             self.dialog.dbpluginclass = dbpluginclass
 
             # fill the connections combobox
             self.dialog.connectionDbList = []
             for c in dbpluginclass.connections():
-                self.dialog.liDbConnection.addItem( unicode(c.connectionName()))
-                self.dialog.connectionDbList.append(unicode(c.connectionName()))
+                self.dialog.liDbConnection.addItem(str(c.connectionName()))
+                self.dialog.connectionDbList.append(str(c.connectionName()))
 
             # Show/Hide database specific pannel
             if hasattr(self.dialog, 'databaseSpecificOptions'):
@@ -150,8 +150,9 @@ class cadastre_common():
         connection = None
         if connectionName:
             # Get schema list
-            dbpluginclass = createDbPlugin( dbType, connectionName )
+            dbpluginclass = createDbPlugin(dbType, connectionName)
             self.dialog.dbpluginclass = dbpluginclass
+
             try:
                 connection = dbpluginclass.connect()
             except BaseError as e:
@@ -172,8 +173,8 @@ class cadastre_common():
                 # Activate schema fields
                 self.toggleSchemaList(True)
                 for s in db.schemas():
-                    self.dialog.liDbSchema.addItem( unicode(s.name))
-                    self.dialog.schemaList.append(unicode(s.name))
+                    self.dialog.liDbSchema.addItem(str(s.name))
+                    self.dialog.schemaList.append(str(s.name))
             else:
                 self.toggleSchemaList(False)
         else:
@@ -250,7 +251,6 @@ class cadastre_common():
         self.dialog.hasMajicDataProp = hasMajicDataProp
         self.dialog.hasMajicData = hasMajicDataVoie
 
-
     def checkDatabaseForExistingTable(self, tableName, schemaName=''):
         '''
         Check if the given table
@@ -261,7 +261,8 @@ class cadastre_common():
             return False
 
         if self.dialog.dbType == 'postgis':
-            sql = "SELECT * FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s'" % (schemaName, tableName)
+            sql = "SELECT * FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s'" % (
+            schemaName, tableName)
 
         if self.dialog.dbType == 'spatialite':
             sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='%s'" % tableName
@@ -272,6 +273,9 @@ class cadastre_common():
 
         return tableExists
 
+    # Bind as class properties for compatibility
+    def getLayerFromLegendByTableProps(*args, **kwargs) -> QgsMapLayer:
+        return common_utils.getLayerFromLegendByTableProps(QgsProject.instance(), *args, **kwargs)
 
     def getLayerFromLegendByTableProps(self, tableName, geomCol='geom', sql=''):
         '''
@@ -490,16 +494,14 @@ class cadastre_common():
         Removes all accents from
         the given string and
         replace e dans l'o
-        '''
-        p = re.compile( '(œ)')
+        """
+        p = re.compile('(œ)')
         s = p.sub('oe', s)
 
-        if isinstance(s,str):
-            s = unicode(s,"utf8","replace")
-
-        s=unicodedata.normalize('NFD',s)
-        s = s.encode('ascii','ignore')
-        s = s.upper().strip(' \t\n')
+        s = unicodedata.normalize('NFD', s)
+        s = s.encode('ascii', 'ignore')
+        s = s.upper()
+        s = s.decode().strip(' \t\n')
         r = re.compile(r"[^ -~]")
         s = r.sub(' ', s)
         s = s.replace("'", " ")
@@ -610,7 +612,7 @@ class cadastre_common():
         spatial tools and create QGIS connection
         '''
         # Let the user choose new file path
-        ipath = QFileDialog.getSaveFileName (
+        ipath, __ = QFileDialog.getSaveFileName(
             None,
             u"Choisir l'emplacement du nouveau fichier",
             str(os.path.expanduser("~").encode('utf-8')).strip(' \t'),
@@ -738,7 +740,7 @@ class cadastre_import_cli(QObject):
         and set input fields appropriately
         '''
         s = QSettings()
-        for k,v in self.sList.items():
+        for k, v in list(self.sList.items()):
             value = s.value("cadastre/%s" % k, '', type=str)
             if value and value != 'None' and v['widget']:
                 if v['wType'] == 'text':
@@ -746,7 +748,7 @@ class cadastre_import_cli(QObject):
                 if v['wType'] == 'spinbox':
                     v['widget'].setValue(int(value))
                 if v['wType'] == 'combobox':
-                    listDic = {v['list'][i]:i for i in range(0, len(v['list']))}
+                    listDic = {v['list'][i]: i for i in range(0, len(v['list']))}
                     v['widget'].setCurrentIndex(listDic[value])
 
 
@@ -768,7 +770,7 @@ class cadastre_import_cli(QObject):
 
             finally:
                 self.qc.updateSchemaList()
-                listDic = { self.schemaList[i]:i for i in range(0, len(self.schemaList)) }
+                listDic = {self.schemaList[i]: i for i in range(0, len(self.schemaList))}
                 self.liDbSchema.setCurrentIndex(listDic[schema])
                 self.inDbCreateSchema.clear()
 
@@ -814,36 +816,36 @@ class cadastre_import_cli(QObject):
 
         # defined properties
         self.doMajicImport = os.path.exists(self.majicSourceDir)
-        self.doEdigeoImport =  os.path.exists(self.edigeoSourceDir)
+        self.doEdigeoImport = os.path.exists(self.edigeoSourceDir)
 
 #        if self.cbMakeValid.isChecked():
 #            self.edigeoMakeValid = True
 
         msg = ''
         if not self.connectionName:
-            msg+= u'Veuillez sélectionner une base de données\n'
+            msg += u'Veuillez sélectionner une base de données\n'
 
         if not self.doMajicImport and not self.doEdigeoImport:
-            msg+= u'Veuillez sélectionner le chemin vers les fichiers à importer !\n'
+            msg += u'Veuillez sélectionner le chemin vers les fichiers à importer !\n'
 
         if self.edigeoSourceDir and not self.doEdigeoImport:
-            msg+= u"Le chemin spécifié pour les fichiers EDIGEO n'existe pas\n"
+            msg += u"Le chemin spécifié pour les fichiers EDIGEO n'existe pas\n"
 
         if self.majicSourceDir and not self.doMajicImport:
-            msg+= u"Le chemin spécifié pour les fichiers MAJIC n'existe pas\n"
+            msg += u"Le chemin spécifié pour les fichiers MAJIC n'existe pas\n"
 
         if self.doEdigeoImport and not self.edigeoSourceProj:
-            msg+= u'La projection source doit être renseignée !\n'
+            msg += u'La projection source doit être renseignée !\n'
         if self.doEdigeoImport and not self.edigeoTargetProj:
-            msg+= u'La projection cible doit être renseignée !\n'
-        if len(self.edigeoDepartement) != 2 :
-            msg+= u'Le département ne doit pas être vide !\n'
+            msg += u'La projection cible doit être renseignée !\n'
+        if len(self.edigeoDepartement) != 2:
+            msg += u'Le département ne doit pas être vide !\n'
         if not self.edigeoDirection:
-            msg+= u'La direction doit être un entier (0 par défaut) !\n'
+            msg += u'La direction doit être un entier (0 par défaut) !\n'
         if not self.edigeoLot:
-            msg+= u'Merci de renseigner un lot pour cet import (code commune, date d\'import, etc.)\n'
+            msg += u'Merci de renseigner un lot pour cet import (code commune, date d\'import, etc.)\n'
 
-        self.qc.updateLog(msg.replace('\n','<br/>'))
+        self.qc.updateLog(msg.replace('\n', '<br/>'))
         return msg
 
     def processImport(self):
