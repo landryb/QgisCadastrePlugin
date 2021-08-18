@@ -276,7 +276,7 @@ class cadastreImport(QObject):
 
         # Log
         jobTitle = u'MAJIC'
-        self.beginJobLog(12, jobTitle)
+        self.beginJobLog(13, jobTitle)
 
         # dict for parameters replacement
         replaceDict = self.replaceDict.copy()
@@ -559,7 +559,7 @@ class cadastreImport(QObject):
 
         # Log : Print connection parameters to database
         jobTitle = u'EDIGEO'
-        self.beginJobLog(13, jobTitle)
+        self.beginJobLog(21, jobTitle)
         self.qc.updateLog(u'Type de base : %s, Connexion: %s, Schéma: %s' % (
             self.dialog.dbType,
             self.dialog.connectionName,
