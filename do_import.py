@@ -76,22 +76,22 @@ class cadastre_common():
 
 
     def updateLog(self, msg):
-        '''
+        """
         Update the log
-        '''
+        """
         print(msg)
 
 
     def updateProgressBar(self):
-        '''
+        """
         Update the progress bar
-        '''
+        """
         print('progress')
 
     def updateConnectionList(self):
-        '''
+        """
         Update the combo box containing the database connection list
-        '''
+        """
 
         dbType = unicode(self.dialog.liDbType.currentText()).lower()
         self.dialog.liDbConnection.clear()
@@ -122,9 +122,9 @@ class cadastre_common():
 
 
     def toggleSchemaList(self, t):
-        '''
+        """
         Toggle Schema list and inputs
-        '''
+        """
         self.dialog.liDbSchema.setEnabled(t)
         if hasattr(self.dialog, "inDbCreateSchema"):
             self.dialog.inDbCreateSchema.setEnabled(t)
@@ -135,9 +135,9 @@ class cadastre_common():
 
 
     def updateSchemaList(self):
-        '''
+        """
         Update the combo box containing the schema list if relevant
-        '''
+        """
         self.dialog.liDbSchema.clear()
 
         connectionName = unicode(self.dialog.liDbConnection.currentText())
@@ -182,11 +182,11 @@ class cadastre_common():
 
 
     def checkDatabaseForExistingStructure(self):
-        '''
+        """
         Search among a database / schema
         if there are alreaday Cadastre structure tables
         in it
-        '''
+        """
         hasStructure = False
         hasData = False
         hasMajicData = False
@@ -252,11 +252,12 @@ class cadastre_common():
         self.dialog.hasMajicData = hasMajicDataVoie
 
     def checkDatabaseForExistingTable(self, tableName, schemaName=''):
-        '''
+        """
         Check if the given table
         exists in the database
-        '''
+        """
         tableExists = False
+
         if not self.dialog.db:
             return False
 
@@ -490,7 +491,7 @@ class cadastre_common():
 
 
     def normalizeString(self, s):
-        '''
+        """
         Removes all accents from
         the given string and
         replace e dans l'o
@@ -606,11 +607,11 @@ class cadastre_common():
 
 
     def createNewSpatialiteDatabase(self):
-        '''
+        """
         Choose a file path to save
         create the sqlite database with
         spatial tools and create QGIS connection
-        '''
+        """
         # Let the user choose new file path
         ipath, __ = QFileDialog.getSaveFileName(
             None,
@@ -725,9 +726,9 @@ class cadastre_import_cli(QObject):
         print("Using this config file for import parameters: "+cfg)
 
     def onClose(self):
-        '''
+        """
         Close dialog
-        '''
+        """
         if self.db:
             self.db.connector.__del__()
 
@@ -735,10 +736,10 @@ class cadastre_import_cli(QObject):
 
 
     def getValuesFromSettings(self):
-        '''
+        """
         get values from QGIS settings
         and set input fields appropriately
-        '''
+        """
         s = QSettings()
         for k, v in list(self.sList.items()):
             value = s.value("cadastre/%s" % k, '', type=str)
@@ -796,9 +797,9 @@ class cadastre_import_cli(QObject):
             return
 
     def checkImportInputData(self):
-        '''
+        """
         Check the user defined inpu data
-        '''
+        """
 
         s = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.IniFormat)
         self.dataVersion = str(s.value('cadastre/dataVersion', '2014', type=str))
@@ -849,9 +850,9 @@ class cadastre_import_cli(QObject):
         return msg
 
     def processImport(self):
-        '''
+        """
         Lancement du processus d'import
-        '''
+        """
 
         msg = self.checkImportInputData()
         if msg:
