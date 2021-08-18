@@ -21,31 +21,28 @@
  ***************************************************************************/
 """
 
-import os, glob
+import glob
 import io
-import sys
+import os
 import re
-import tempfile
 import shutil
+import sqlite3 as sqlite
+import sys
+import tempfile
+
+from datetime import datetime
 from distutils import dir_util
 
-from PyQt5.QtCore import (
-    Qt,
-    QObject,
-    QSettings
-)
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMessageBox
-)
-from datetime import datetime
-
-# db_manager scripts
-from db_manager.db_plugins.plugin import (
-    BaseError
-)
+from db_manager.db_plugins.plugin import BaseError
 from db_manager.dlg_db_error import DlgDbError
-import sqlite3 as sqlite
+from qgis.core import Qgis, QgsMessageLog
+from qgis.PyQt.QtCore import QObject, QSettings, Qt
+from qgis.PyQt.QtWidgets import QApplication, QMessageBox
+
+from cadastre.dialogs.dialog_common import CadastreCommon
+
+# Import ogr2ogr.py from the script folder
+from cadastre.scripts.pyogr.ogr2ogr import main as ogr2ogr
 
 
 class cadastreImport(QObject):
@@ -867,8 +864,8 @@ class cadastreImport(QObject):
             zipFileList = self.listFilesInDirectory(path, ['zip'])
 
             # unzip all files
-            import zipfile
             import tarfile
+            import zipfile
             try:
                 # unzip all zip in source folder
                 for z in zipFileList:
