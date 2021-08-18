@@ -84,6 +84,33 @@ class CadastreCommon():
         Update the progress bar
         """
         print('progress')
+    def load_default_values(self):
+        """ Try to load values in the UI which are stored in QGIS settings.
+
+        The function will return as soon as it is missing a value in the QGIS Settings.
+        The order is DB Type, connection name and then the schema.
+        """
+        settings = QgsSettings()
+        WidgetSettings = namedtuple('WidgetSettings', ('ui', 'settings'))
+        widgets = [
+            WidgetSettings('liDbType', 'databaseType'),
+            WidgetSettings('liDbConnection', 'connection'),
+            WidgetSettings('liDbSchema', 'schema'),
+        ]
+        is_postgis = settings.value("cadastre/databaseType", type=str, defaultValue='') == 'postgis'
+        for widget in widgets:
+
+            if widget.settings == 'schema' and not is_postgis:
+                return
+
+            if not hasattr(self.dialog, widget.ui):
+                return
+            value = settings.value("cadastre/" + widget.settings, type=str, defaultValue='')
+            combo = getattr(self.dialog, widget.ui)
+            index = combo.findText(value, Qt.MatchFixedString)
+            if not index:
+                return
+            combo.setCurrentIndex(index)
 
     def updateConnectionList(self):
         """
