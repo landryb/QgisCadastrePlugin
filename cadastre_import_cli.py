@@ -1435,7 +1435,7 @@ class cadastreImport(QObject):
                     # only for given object id
                     sql += " WHERE object_rid = '%s' " % str(obj)
                     # only if the 2 geometries are indeed different. To be debbuged : geom <> geom : operator is not unique
-                    #~ sql+= " AND geom != ST_Transform(ST_GeomFromText('%s', %s), %s) " % (wkt, self.sourceSrid, self.targetSrid)
+                    # ~ sql+= " AND geom != ST_Transform(ST_GeomFromText('%s', %s), %s) " % (wkt, self.sourceSrid, self.targetSrid)
                     # only if the 2 geometries are related (object_rid is not unique)
                     if self.dialog.dbType == 'postgis':
                         sql += " AND geom @ ST_Transform(ST_GeomFromText('%s', %s), %s) ; " % (
