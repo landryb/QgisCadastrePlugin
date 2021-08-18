@@ -1239,21 +1239,33 @@ class cadastreImport(QObject):
                 settingsList = ["host", "database", "username", "password"]
                 host, database, username, password = map(lambda x: settings.value(x, type=str), settingsList)
                 port = settings.value("port", type=int)
+                service = None
+                if service:
+                    pg_access = 'PG:service=%s active_schema=%s' % (
+                        service,
+                        self.dialog.schema
+                    )
+                else:
+                    # qgis can connect to postgis DB without a specified host param connection, but ogr2ogr cannot
+                    if not host:
+                        host = "localhost"
 
-                cmdArgs = [
-                    '',
-                    '-s_srs', self.sourceSridFull,
-                    targetSridOption, self.targetSridFull,
-                    '-append',
-                    '-f', 'PostgreSQL',
-                    'PG:host=%s port=%s dbname=%s active_schema=%s user=%s password=%s' % (
+
+                    pg_access = 'PG:host=%s port=%s dbname=%s active_schema=%s user=%s password=%s' % (
                         host,
                         port,
                         database,
                         self.dialog.schema,
                         username,
                         password
-                    ),
+                    )
+                cmdArgs = [
+                    '',
+                    '-s_srs', self.sourceSridFull,
+                    targetSridOption, self.targetSridFull,
+                    '-append',
+                    '-f', 'PostgreSQL',
+                    pg_access,
                     filename,
                     '-lco', 'GEOMETRY_NAME=geom',
                     '-lco', 'PG_USE_COPY=YES',
