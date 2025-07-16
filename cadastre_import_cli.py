@@ -614,7 +614,7 @@ class cadastreImport(QObject):
             self.dialog.connectionName,
             self.dialog.schema
         )
-                          )
+        )
         self.updateProgressBar()
 
         if self.go:
@@ -957,7 +957,28 @@ class cadastreImport(QObject):
                 for z in tarFileListA:
                     with tarfile.open(z) as t:
                         try:
-                            t.extractall(os.path.join(self.edigeoPlainDir, 'tar_%s' % i))
+                            # See https://docs.python.org/3.10/library/tarfile.html#tarfile.TarFile.extractall
+                            # See https://peps.python.org/pep-0706/
+                            arguments = {
+                                'filter': 'data'
+                            }
+                            if (3, 8, 0) <= sys.version_info < (3, 8, 17) \
+                                    or (3, 9, 0) <= sys.version_info < (3, 9, 17) \
+                                    or (3, 10, 0) <= sys.version_info < (3, 10, 12):
+                                msg = (
+                                    "Version de Python obsolète, votre version comporte une faille de sécurité "
+                                    "concernant l'extraction d'une archive. Veuillez monter votre version de QGIS afin "
+                                    "de passer à une version plus récente dès que possible."
+                                )
+                                self.qc.updateLog(f"<b>{msg}</b>")
+                                # noinspection PyTypeChecker
+                                QgsMessageLog.logMessage(msg, 'cadastre', Qgis.MessageLevel.Warning)
+                                arguments.pop('filter')
+
+                            t.extractall(
+                                os.path.join(self.edigeoPlainDir, 'tar_%s' % i),
+                                **arguments,
+                            )
                         except tarfile.ReadError:
                             # Issue GitHub #339
                             self.go = False
@@ -974,7 +995,7 @@ class cadastreImport(QObject):
                 for z in tarFileListB:
                     with tarfile.open(z) as t:
                         try:
-                            t.extractall(os.path.join(self.edigeoPlainDir, 'tar_%s' % i))
+                            t.extractall(os.path.join(self.edigeoPlainDir, f'tar_{i}'))
                         except tarfile.ReadError:
                             # Issue GitHub #339
                             self.go = False
@@ -987,7 +1008,7 @@ class cadastreImport(QObject):
                     try:
                         os.remove(z)
                     except OSError:
-                        self.qc.updateLog("<b>Erreur lors de la suppression de %s</b>" % str(z))
+                        self.qc.updateLog(f"<b>Erreur lors de la suppression de {z}</b>")
                         pass  # in Windows, sometime file is not unlocked
 
             except OSError:
@@ -1088,7 +1109,6 @@ class cadastreImport(QObject):
 
                     # Write comment taken from "-- some comment" lines
                     for comment in cr.findall(sqla):
-
                         # Update timer before writing the comment
                         # it will show the time taken by the previous statement
                         self.updateTimer()
@@ -1212,7 +1232,6 @@ class cadastreImport(QObject):
                             # fix_print_with_import
                             print("issue closing connection")
                             pass
-
 
     def importAllEdigeoToDatabase(self):
         """
@@ -1406,7 +1425,7 @@ class cadastreImport(QObject):
                     sql = "BEGIN;"
                     for item in l:
                         sql += "INSERT INTO edigeo_rel ( nom, de, vers) VALUES ( '{}', '{}', '{}');".format(
-                        item[0], item[1], item[2])
+                            item[0], item[1], item[2])
                     sql += "COMMIT;"
                     sql = CadastreCommon.setSearchPath(sql, self.dialog.schema)
                     self.executeSqlQuery(sql)
@@ -1499,10 +1518,10 @@ class cadastreImport(QObject):
                     # only if the 2 geometries are related (object_rid is not unique)
                     if self.dialog.dbType == 'postgis':
                         sql += " AND geom @ ST_Transform(ST_GeomFromText('{}', {}), {}) ; ".format(
-                        wkt, self.sourceSrid, self.targetSrid)
+                            wkt, self.sourceSrid, self.targetSrid)
                     else:
                         sql += " AND ST_Intersects(geom, ST_Transform(ST_GeomFromText('{}', {}), {}) ); ".format(
-                        wkt, self.sourceSrid, self.targetSrid)
+                            wkt, self.sourceSrid, self.targetSrid)
                 sqlList.append(sql)
 
         return sqlList
