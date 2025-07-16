@@ -78,7 +78,7 @@ def getLayerFromLegendByTableProps(
         if not hasattr(layer, 'providerType'):
             continue
 
-        if hasattr(layer, 'type') and layer.type() != QgsMapLayer.VectorLayer:
+        if hasattr(layer, 'type') and layer.type() != QgsMapLayer.LayerType.VectorLayer:
             # Ignore this layer as it's not a vector
             # QgsMapLayer.VectorLayer is an equivalent to QgsMapLayerType.VectorLayer since 3.8
             continue
@@ -166,6 +166,8 @@ def fetchDataFromSqlQuery(connector: 'DBConnector',
     row_count = 0
     c = None
     ok = True
+    if False:
+        QgsMessageLog.logMessage(sql, "cadastre", Qgis.MessageLevel.Info)
     try:
         c = connector._execute(None, str(sql))
         data = connector._fetchall(c)
@@ -176,9 +178,9 @@ def fetchDataFromSqlQuery(connector: 'DBConnector',
         QgsMessageLog.logMessage(
             f"Error while fetching data from database : {str(e.msg)}",
             "cadastre",
-            Qgis.Critical
+            Qgis.MessageLevel.Critical
         )
-        QgsMessageLog.logMessage(sql, "cadastre", Qgis.Info)
+        QgsMessageLog.logMessage(sql, "cadastre", Qgis.MessageLevel.Info)
 
     finally:
         if c:
@@ -234,7 +236,7 @@ def getConnectorFromUri(connectionParams: Dict[str, str]) -> 'DBConnector':
             QgsMessageLog.logMessage(
                 f"Erreur lors de la récupération du fichier SQLite : {str(e)}",
                 'cadastre',
-                Qgis.Critical)
+                Qgis.MessageLevel.Critical)
 
     return connector
 
@@ -260,8 +262,9 @@ def postgisToSpatialite(sql: str, targetSrid: str = '2154') -> str:
         {'in': r'alter table [^;]+drop constraint[^;]+;', 'out': ''},
         # ~ {'in': r'^analyse [^;]+;', 'out': ''},
         # replace
-        {'in': r'truncate (bati|fanr|lloc|nbat|pdll|prop)',
-         'out': r'drop table \1;create table \1 (tmp text)'},
+        {'in': r'truncate (bati|lloc|nbat|pdll|prop)',
+         'out': r'drop table if exists \1;create table \1 (tmp text)'},
+        {'in': r'truncate topo', 'out': r'delete from topo'},
         {'in': r'truncate ', 'out': 'delete from '},
         {'in': r'distinct on *\([a-z, ]+\)', 'out': 'distinct'},
         {'in': r'serial', 'out': 'INTEGER PRIMARY KEY AUTOINCREMENT'},
@@ -274,6 +277,10 @@ def postgisToSpatialite(sql: str, targetSrid: str = '2154') -> str:
          'out': r"date(substr(\2, 5, 4) || '-' || substr(\2, 3, 2) || '-' || substr(\2, 1, 2))"},
         {'in': r"(to_date\()([^']+) *, *'DD/MM/YYYY' *\)",
          'out': r"date(substr(\2, 7, 4) || '-' || substr(\2, 4, 2) || '-' || substr(\2, 1, 2))"},
+
+        {'in': r"(to_char\()(.+), 'DDD'\)",
+         'out': r"strftime('%j', \2)"},
+
         {'in': r"(to_date\()([^']+) *, *'YYYYMMDD' *\)",
          'out': r"date(substr(\2, 1, 4) || '-' || substr(\2, 5, 2) || '-' || substr(\2, 7, 2))"},
         {'in': r"(to_char\()([^']+) *, *'dd/mm/YYYY' *\)",

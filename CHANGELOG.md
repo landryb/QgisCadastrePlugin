@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+## 2.1.1 - 2025-04-24
+
+* Poursuite de la version précédente sur le support PyQt6
+
+## 2.1.0 - 2025-04-24
+
+* Suppression de l'usage de `distutils` pour Python 3.12
+* Ajout de `X-Request-Id` pour les logs côté serveur
+* Raise to QGIS 3.28 minimum version
+* Add compatibility for PyQt6
+
+## 2.0.1 - 2025-02-27
+
+* Ajout du financeur pour la version 2.0.0 : le CRAIG @landryb
+
+## 2.0.0 - 2025-02-14
+
+* Import MAJIC - Abandon du support des fichiers FANTOIR au bénéfice des fichiers TOPO
+  * Le FANTOIR n'est plus supporté, même pour des vieux millésimes
+  * Le TOPO est le format utilisé pour l'import des voies
+  * Certains champs dans la table des voies ne sont plus remplis par des chaînes vides
+    mais par des vrais `NULL`, comme par exemple `natvoie`
+  * Détail: https://github.com/3liz/QgisCadastrePlugin/pull/475
+* Import MAJIC - les noms fichiers MAJIC ne sont plus stricts mais devinés par le plugin
+  * Dans la configuration, les noms des fichiers sont maintenant des clés de recherche
+    (expressions régulières). NB: Il est déconseillé de les modifier sans maîtriser.
+  * Lors de l'import, le plugin trouve automatiquement les fichiers par type en utilisant
+    ces clés de recherche.
+  * Détail: https://github.com/3liz/QgisCadastrePlugin/pull/474
+
+## 1.20.0 - 2024-08-19
+
+* Correction de la recherche sur adresse avec des codes voies n'ayant pas l'identifiant MAJIC (`ccovoi`) @landryb
+* Utilisation d'une URL temporaire pour les FANTOIR 2024 drive.opendata.craig.fr, @landryb
+* Support du millésime 2024 dans le formulaire d'import, @MaelREBOUX et @EtienneRouvin
+* Correction d'une faille de sécurité lors de l'extraction de l'archive TAR, pensez à vérifier votre version de Python
+
 ## 1.19.2 - 2024-07-02
 
 * Correction du style par défaut pour être compatible avec Lizmap Web Client 3.7

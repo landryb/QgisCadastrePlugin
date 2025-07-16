@@ -89,7 +89,7 @@ class EdigeoDownloader(BaseProcessingAlgorithm):
             defaultValue=self.url(),
         )
         parameter.setHelp('À ne changer que si l\'URL change')
-        parameter.setFlags(parameter.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        parameter.setFlags(parameter.flags() | QgsProcessingParameterDefinition.Flag.FlagAdvanced)
         self.addParameter(parameter)
 
         self.addOutput(QgsProcessingOutputNumber(self.NB_COMMUNES, 'Nombre de communes'))
@@ -207,6 +207,10 @@ class EdigeoDownloader(BaseProcessingAlgorithm):
 
     def displayName(self):
         return 'Téléchargeur Édigéo communal'
+
+    @staticmethod
+    def tags():
+        return 'edigeo', 'édigéo', 'édigeo', 'edigéo'
 
     def shortHelpString(self):
         return (

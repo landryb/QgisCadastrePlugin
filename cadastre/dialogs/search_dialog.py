@@ -50,7 +50,7 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
         super().__init__(parent)
         self.iface = iface
         self.setupUi(self)
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self)
+        self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self)
 
         # Images
         plugin_dir = str(Path(__file__).resolve().parent.parent)
@@ -285,9 +285,9 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
                 # Activate autocompletion
                 completer = CustomQCompleter([], self)
                 # completer.setCompletionMode(QCompleter.PopupCompletion) # does not work with regex custom completer
-                completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
+                completer.setCompletionMode(QCompleter.CompletionMode.UnfilteredPopupCompletion)
                 completer.setMaxVisibleItems(20)
-                completer.setCaseSensitivity(Qt.CaseInsensitive)
+                completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
                 # completer.popup().setStyleSheet("background-color: lightblue")
                 completer.activated.connect(partial(self.onCompleterActivated, key))
                 control = item['widget']
@@ -304,11 +304,11 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
                 control = item['widget']
                 # when the user edits the combobox content
                 slot = partial(self.onNonSearchItemEdit, key)
-                control.editTextChanged[str].connect(slot)
+                control.editTextChanged.connect(slot)
 
                 # when the user chooses in the list
                 slot = partial(self.onNonSearchItemChoose, key)
-                control.currentIndexChanged[str].connect(slot)
+                control.currentIndexChanged.connect(slot)
 
                 # when the user reset the entered value
                 control = item['resetWidget']
@@ -409,7 +409,7 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
 
         if not self.hasMajicDataParcelle or not self.hasMajicDataVoie:
             self.qc.updateLog(
-                "<b>Pas de données MAJIC non bâties et/ou fantoir</b> -> désactivation de la recherche d'adresse")
+                "<b>Pas de données MAJIC non bâties et/ou TOPO</b> -> désactivation de la recherche d'adresse")
         if not self.hasMajicDataProp:
             self.qc.updateLog(
                 "<b>Pas de données MAJIC propriétaires</b> -> désactivation de la recherche de propriétaires")
@@ -490,9 +490,9 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
 
             # Activate autocompletion ( based on combobox content, match only first letters)
             completer = QCompleter(itemList, self)
-            completer.setCompletionMode(QCompleter.PopupCompletion)
+            completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
             completer.setMaxVisibleItems(30)
-            completer.setCaseSensitivity(Qt.CaseInsensitive)
+            completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
             # ~ completer.popup().setStyleSheet("background-color: lightblue")
             cb.setEditable(True)
             cb.setCompleter(completer)
@@ -510,7 +510,7 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
         """
         Refresh autocompletion while the users add more chars in line edit
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
         # Get value
         combo = self.searchComboBoxes[key]['widget']
@@ -578,7 +578,8 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
         # Build SQL query
         hasCommuneFilter = None
         if key == 'adresse':
-            sql = ' SELECT DISTINCT v.voie, c.tex2 AS libcom, v.natvoi, v.libvoi'
+            sql = " SELECT DISTINCT v.voie, c.tex2 AS libcom, "
+            sql += " trim(Coalesce(v.natvoi, '') || ' ' || coalesce(v.libvoi, '')) AS natlibvoi"
             if self.dbType == 'postgis':
                 sql += ' FROM "{}"."voie" v'.format(connectionParams['schema'])
             else:
@@ -602,9 +603,9 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
                 hasCommuneFilter = True
 
             # order
-            sql += ' ORDER BY c.tex2, v.natvoi, v.libvoi'
+            sql += ' ORDER BY c.tex2, natlibvoi'
 
-        if key == 'proprietaire':
+        elif key == 'proprietaire':
 
             # determines if search by usage name or birth name
             searchByBirthName = self.cbSearchNameBirth.isChecked()
@@ -625,7 +626,7 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
 
             selectedCity = '' if selectedCity is None else selectedCity
 
-            if searchByBirthName is False:
+            if not searchByBirthName:
                 # search by usage name
                 sql = "/* search by usage name*/\r\n"
                 sql += "WITH proprio AS (\r\n"
@@ -649,14 +650,14 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
                 sql += "GROUP BY proprio.ccocom, comptecommunal, dnuper, nom_usage, geo_commune\r\n"
                 sql += "ORDER BY nom_usage\r\n"
 
-            elif searchByBirthName is True:
+            else:
                 # search by birth name
                 sql = "/* search by birth name*/\r\n"
                 sql += "WITH proprio AS (\r\n"
                 sql += "  SELECT\r\n"
                 sql += "    ccocom, comptecommunal, dnuper, dnomus, dprnus,\r\n"
                 sql += "    CASE\r\n"
-                sql += "        WHEN gtoper = '1' THEN COALESCE(rtrim(dqualp),'')||' '||COALESCE(rtrim(dnomlp),'')||' '||COALESCE(rtrim(dprnlp),'')\r\n"
+                sql += "        WHEN gtoper = '1' THEN COALESCE(rtrim(dqualp), '')||' '||COALESCE(rtrim(dnomlp),'')||' '||COALESCE(rtrim(dprnlp),'')\r\n"
                 sql += "        WHEN gtoper = '2' THEN trim(ddenom)\r\n"
                 sql += "    END AS nom_naissance\r\n"
                 sql += sqlFrom
@@ -672,8 +673,10 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
                 sql += " AND commune.commune LIKE %s" % self.connector.quoteString('%' + selectedCity + '%') + "\r\n"
                 sql += "GROUP BY proprio.ccocom, comptecommunal, dnuper, dnomus, dprnus, nom_naissance, geo_commune\r\n"
                 sql += "ORDER BY nom_naissance\r\n"
+
         sql += ' LIMIT 50'
 
+        # self.qc.updateLog(sql)
         data, rowCount, ok = CadastreCommon.fetchDataFromSqlQuery(connector, sql)
 
         # Write message in log
@@ -691,10 +694,9 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
         maxStringSize = 0
         for line in data:
             if key == 'adresse':
-                label = '{} | {} {}'.format(
+                label = '{} | {}'.format(
                     line[1].strip(),
-                    line[2].strip(),
-                    line[3].strip()
+                    line[2].strip()
                 )
                 val = {'voie': line[0]}
 
@@ -744,10 +746,10 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
     def getFeaturesFromSqlQuery(self, layer, filterExpression=None, attributes='*', orderBy=None):
         """
         Get data from a db table,
-        optionnally filtered by given expression
+        optionally filtered by given expression
         and get corresponding QgsFeature objects
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
         # Get connection parameters
         connectionParams = CadastreCommon.getConnectionParameterFromDbLayer(layer)
@@ -810,7 +812,7 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
         Get the feature corresponding to
         the chosen combobox value
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
         # Get widget
         searchCombo = self.searchComboBoxes[combo]
@@ -846,7 +848,7 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
         to chosen item in combo box
         (adresse, proprietaire)
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
         # Get value
         # combo = self.searchComboBoxes[key]['widget']
@@ -855,10 +857,10 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
             QApplication.restoreOverrideCursor()
             return None
 
-        # Set filter expression for parcell child data
+        # Set filter expression for parcelle child data
         ckey = self.searchComboBoxes[key]['search']['parcelle_child']
         if key == 'adresse':
-            filterExpression = "voie = '%s'" % value['voie']
+            filterExpression = "SUBSTR(voie, 1, 6) || SUBSTR(voie, 12, 4) = '%s%s'" % (value['voie'][0:6], value['voie'][11:])
 
         if key == 'proprietaire':
             filterExpression = "comptecommunal IN (%s)" % ', '.join(value['cc'])
@@ -1112,8 +1114,8 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
         printer = QPrinter()
         printer.setPageSize(QPrinter.A4)
         printer.setOrientation(QPrinter.Landscape)
-        printer.setPageMargins(5, 10, 5, 10, QPrinter.Millimeter)
-        printer.setOutputFormat(QPrinter.NativeFormat)
+        printer.setPageMargins(5, 10, 5, 10, QPrinter.Unit.Millimeter)
+        printer.setOutputFormat(QPrinter.OutputFormat.NativeFormat)
         dlg = QPrintPreviewDialog(printer)
         dlg.setWindowIcon(QIcon(
             os.path.join(
@@ -1121,9 +1123,9 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
             )
         ))
         dlg.setWindowTitle("Aperçu")
-        dlg.setWindowFlags(Qt.WindowMaximizeButtonHint | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint)
+        dlg.setWindowFlags(Qt.WindowType.WindowMaximizeButtonHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         dlg.paintRequested.connect(document.print_)
-        dlg.exec_()
+        dlg.exec()
 
     def copyInfosProprietaires(self):
         QApplication.clipboard().setText(
@@ -1140,11 +1142,11 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
         dlgFile.setNameFilters(("All (*.htm*)", "HTML (*.html)", "HTM (*.htm)"))
         dlgFile.selectNameFilter("Fichier HTML (*.html)")
         dlgFile.setDefaultSuffix("html")
-        dlgFile.setViewMode(QFileDialog.Detail)
+        dlgFile.setViewMode(QFileDialog.ViewMode.Detail)
         dlgFile.setDirectory(plugin_dir)
-        dlgFile.setAcceptMode(QFileDialog.AcceptSave)
+        dlgFile.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
 
-        if not dlgFile.exec_():
+        if not dlgFile.exec():
             return
 
         fileName = dlgFile.selectedFiles()[0]
@@ -1226,7 +1228,7 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
             for_third_party
         )
 
-        with OverrideCursor(Qt.WaitCursor):
+        with OverrideCursor(Qt.CursorShape.WaitCursor):
             exports = qex.export_as_pdf()
 
         if not exports:
@@ -1275,7 +1277,7 @@ class CadastreSearchDialog(QDockWidget, SEARCH_FORM_CLASS):
             None, for_third_party
         )
 
-        with OverrideCursor(Qt.WaitCursor):
+        with OverrideCursor(Qt.CursorShape.WaitCursor):
             exports = qex.export_as_pdf()
 
         if not exports:

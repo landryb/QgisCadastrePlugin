@@ -6,7 +6,7 @@ Cette boite de dialogue permet de réaliser un **import de données EDIGEO et MA
 
 ## Principe
 
-L'extension permet l'import de données **MAJIC de 2012 à 2023 et des données EDIGEO**. Il est possible
+L'extension permet l'import de données **MAJIC de 2012 à 2025 et des données EDIGEO**. Il est possible
 d'importer des données de manière incrémentale, **étape par étape**, ou bien d'importer **en une seule fois**.
 
 L'extension utilise pour cela la notion de **lot**. Un lot regroupe un **ensemble de données cohérent** pour
@@ -57,6 +57,24 @@ Il n'existe actuellement aucune contrainte de clés étrangères sur les tables 
 proposerons à l'avenir un script qui permettra de les créer, lorsque les données le permettent (ce qui n'est
 pas toujours le cas, comme des voies non référencées dans `voie` mais référencées dans `parcelle`).
 
+## Données
+
+### Edigeo
+
+Vous pouvez utiliser le téléchargeur Edigeo dans la boîte à outil **Traitements** de QGIS, dans l'extension
+**Cadastre**.
+
+### FANTOIR
+
+Le support des fichiers FANTOIR a été abandonné début 2025 au profit du support des fichiers TOPO.
+
+### TOPO
+
+Si vous ne possédez pas les données TOPO dans votre jeu de données MAJIC, nous conseillons de les télécharger sur le
+[site du CRAIG](https://drive.opendata.craig.fr/s/opendata?path=%2Fadresse%2Ftopo)
+et de configurer l'extension pour vérifier que vous avez configuré le bon mot pour la recherche
+des fichiers TOPO.
+
 ## Les étapes d'importation
 
 Pour lancer l'importation, il faut bien avoir au préalable configuré les noms des fichiers MAJIC via le menu
@@ -92,15 +110,12 @@ On configure ensuite les options :
 
     - Comme pour EDIGEO, l'extension ira chercher les fichiers dans les répertoires et les sous-répertoires et
       importera l'ensemble des données.
-    - Si vous ne possédez pas les données FANTOIR dans votre jeu de données MAJIC, nous conseillons vivement
-      de les télécharger et de configurer l'extension pour donner le bon nom au fichier FANTOIR :
-      https://www.collectivites-locales.gouv.fr/competences/la-mise-disposition-gratuite-du-fichier-des-voies-et-des-lieux-dits-fantoir
 
 * Choisir la **version du format** en utilisant les flèches haut et bas
 
-    - Seuls les formats de 2012 à 2023 sont pris en compte
+    - Seuls les formats de 2012 à 2025 sont pris en compte
 
-* Choisir le **millésime des données**, par exemple 2023
+* Choisir le **millésime des données**, par exemple 2025
 
 * Choisir le **Lot** : utilisez par exemple le code INSEE de la commune.
 
@@ -156,7 +171,7 @@ SRID. Nous avons utilisé ici `998999`, qui est le maximum possible.
 !!! tip
     Pour trouver la chaîne **WKT** décrivant la projection, à défaut de la trouver sur internet pour le moment,
     nous pouvons utiliser l'API PyQGIS. Dans le menu **Extensions** → **Console Python**, écrire :
-    
+
     ```python
     QgsCoordinateReferenceSystem('IGNF:GUAD48UTM20').toWkt()
     ```

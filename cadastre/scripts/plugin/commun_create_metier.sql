@@ -1,9 +1,26 @@
 ﻿CREATE TABLE bati (tmp text);
-CREATE TABLE fanr (tmp text);
 CREATE TABLE lloc (tmp text);
 CREATE TABLE nbat (tmp text);
 CREATE TABLE pdll (tmp text);
 CREATE TABLE prop (tmp text);
+
+CREATE TABLE topo (
+    ogc_fid serial,
+    code_topo character varying,
+    nature_de_la_voie character varying,
+    libelle character varying,
+    type_commune_actuel_r_ou_n character varying,
+    type_commune_fip_r_ou_nfip character varying,
+    rur_actuel character varying,
+    rur_fip character varying,
+    caractere_voie character varying,
+    annulation character varying,
+    date_annulation character varying,
+    date_creation_de_article character varying,
+    type_voie character varying,
+    mot_classant character varying,
+    date_derniere_transition character varying
+);
 
 CREATE TABLE parcelle (
     parcelle text,
@@ -167,8 +184,10 @@ CREATE TABLE local00 (
     ccocif text,
     dvoilib text,
     cleinvar text,
+    assietf text,
     ccpper text,
     locinc text,
+    codique text,
     lot text
 );
 
@@ -277,6 +296,7 @@ CREATE TABLE pev (
     ccorvl text,
     dtaurv integer,
     dcmloc integer,
+    jancmp text,
     lot text
 );
 
@@ -842,7 +862,7 @@ CREATE TABLE geo_commune
   lot text,
   ogc_fid serial NOT NULL
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_commune', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_commune', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 
 
@@ -860,7 +880,7 @@ CREATE TABLE geo_section
   ogc_fid serial NOT NULL
 )
 ;
-SELECT AddGeometryColumn ( current_schema::text, 'geo_section', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_section', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 
 CREATE TABLE geo_qupl (geo_qupl text PRIMARY KEY,geo_qupl_lib text);
@@ -887,7 +907,7 @@ CREATE TABLE geo_subdsect
   lot text,
   ogc_fid serial NOT NULL
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_subdsect', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_subdsect', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 
 CREATE TABLE geo_indp (geo_indp text,geo_indp_lib text);
@@ -913,7 +933,7 @@ CREATE TABLE geo_parcelle
   lot text,
   ogc_fid serial NOT NULL
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_parcelle', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_parcelle', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 CREATE VIEW v_geo_parcelle AS
 SELECT g.*, p.comptecommunal, p.voie
@@ -930,7 +950,7 @@ CREATE TABLE geo_subdfisc
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_subdfisc', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_subdfisc', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 
 CREATE TABLE geo_subdfisc_parcelle
@@ -951,7 +971,7 @@ CREATE TABLE geo_voiep
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_voiep', 'geom', 2154 , 'POINT', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_voiep', 'geom', ${SRID} , 'POINT', 2 );
 
 
 CREATE TABLE geo_numvoie
@@ -964,7 +984,7 @@ CREATE TABLE geo_numvoie
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_numvoie', 'geom', 2154 , 'POINT', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_numvoie', 'geom', ${SRID} , 'POINT', 2 );
 
 
 CREATE TABLE geo_numvoie_parcelle
@@ -985,7 +1005,7 @@ CREATE TABLE geo_lieudit
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_lieudit', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_lieudit', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 
 CREATE TABLE geo_dur (geo_dur text,geo_dur_lib text);
@@ -1003,7 +1023,7 @@ CREATE TABLE geo_batiment
   lot text,
   ogc_fid serial NOT NULL
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_batiment', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_batiment', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 
 CREATE TABLE geo_batiment_parcelle
@@ -1024,7 +1044,7 @@ CREATE TABLE geo_zoncommuni
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_zoncommuni', 'geom', 2154 , 'MULTILINESTRING', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_zoncommuni', 'geom', ${SRID} , 'MULTILINESTRING', 2 );
 
 
 CREATE TABLE geo_tronfluv
@@ -1037,7 +1057,7 @@ CREATE TABLE geo_tronfluv
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_tronfluv', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_tronfluv', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 
 CREATE TABLE geo_tronroute
@@ -1050,7 +1070,7 @@ CREATE TABLE geo_tronroute
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_tronroute', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_tronroute', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 
 CREATE TABLE geo_can (geo_can text,geo_can_lib text);
@@ -1079,7 +1099,7 @@ CREATE TABLE geo_ptcanv
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_ptcanv', 'geom', 2154 , 'POINT', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_ptcanv', 'geom', ${SRID} , 'POINT', 2 );
 
 
 CREATE TABLE geo_borne
@@ -1091,7 +1111,7 @@ CREATE TABLE geo_borne
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_borne', 'geom', 2154 , 'POINT', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_borne', 'geom', ${SRID} , 'POINT', 2 );
 
 
 CREATE TABLE geo_borne_parcelle
@@ -1111,7 +1131,7 @@ CREATE TABLE geo_croix
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_croix', 'geom', 2154 , 'POINT', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_croix', 'geom', ${SRID} , 'POINT', 2 );
 
 
 CREATE TABLE geo_croix_parcelle
@@ -1133,7 +1153,7 @@ CREATE TABLE geo_symblim
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_symblim', 'geom', 2154 , 'POINT', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_symblim', 'geom', ${SRID} , 'POINT', 2 );
 
 
 CREATE TABLE geo_symblim_parcelle
@@ -1156,7 +1176,7 @@ CREATE TABLE geo_tpoint
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_tpoint', 'geom', 2154 , 'POINT', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_tpoint', 'geom', ${SRID} , 'POINT', 2 );
 
 
 CREATE TABLE geo_tpoint_commune
@@ -1178,7 +1198,7 @@ CREATE TABLE geo_tline
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_tline', 'geom', 2154 , 'MULTILINESTRING', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_tline', 'geom', ${SRID} , 'MULTILINESTRING', 2 );
 
 
 CREATE TABLE geo_tline_commune
@@ -1200,7 +1220,7 @@ CREATE TABLE geo_tsurf
   update_dat date,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_tsurf', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_tsurf', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 
 CREATE TABLE geo_tsurf_commune
@@ -1237,7 +1257,7 @@ CREATE TABLE geo_label
   x_label numeric,
   y_label numeric
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_label', 'geom', 2154 , 'POINT', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_label', 'geom', ${SRID} , 'POINT', 2 );
 
 
 CREATE TABLE edigeo_rel ( edigeo_rel serial,nom text,de text,vers text);
@@ -1251,7 +1271,7 @@ CREATE TABLE geo_unite_fonciere
   annee text NOT NULL,
   lot text
 );
-SELECT AddGeometryColumn ( current_schema::text, 'geo_unite_fonciere', 'geom', 2154 , 'MULTIPOLYGON', 2 );
+SELECT AddGeometryColumn ( current_schema::text, 'geo_unite_fonciere', 'geom', ${SRID} , 'MULTIPOLYGON', 2 );
 
 
 -- COMMENTS
@@ -1387,8 +1407,10 @@ COMMENT ON COLUMN local00.dindic IS 'indice de répétition - ';
 COMMENT ON COLUMN local00.ccocif IS 'code du cdi/cdif (code topad) - ';
 COMMENT ON COLUMN local00.dvoilib IS 'libelle de la voie - ';
 COMMENT ON COLUMN local00.cleinvar IS 'clé alpha no invariant - ';
+COMMENT ON COLUMN local00.assietf IS 'Code SAGES du service gestionnaire de la taxe foncière';
 COMMENT ON COLUMN local00.ccpper IS 'Code de trésorerie gestionnaire - ';
 COMMENT ON COLUMN local00.locinc IS 'code local sans évaluation - INDISPONIBLE';
+COMMENT ON COLUMN local00.codique IS 'Code codique du service de recouvrement de la TF';
 COMMENT ON TABLE local10 IS 'Article identifiant du local';
 COMMENT ON COLUMN local10.ccodep IS 'code département - ';
 COMMENT ON COLUMN local10.ccodir IS 'code direction - ';
@@ -1477,6 +1499,7 @@ COMMENT ON COLUMN pev.ccortar IS 'Code commune origine du tarif';
 COMMENT ON COLUMN pev.ccorvl IS 'Code réduction du local';
 COMMENT ON COLUMN pev.dtaurv IS 'Taux de réduction';
 COMMENT ON COLUMN pev.dcmloc IS 'Coefficient de modulation du local';
+COMMENT ON COLUMN pev.jancmp IS 'Année de début de compensation';
 
 
 COMMENT ON TABLE pevexoneration IS 'Article exonération de pev imposable';
@@ -1710,7 +1733,7 @@ COMMENT ON COLUMN proprietaire.gtoper IS 'indicateur de personne physique ou mor
 COMMENT ON COLUMN proprietaire.ccoqua IS 'Code qualité de personne physique - 1, 2 ou 3';
 COMMENT ON COLUMN proprietaire.gnexcf IS 'code exo ecf - INDISPONIBLE';
 COMMENT ON COLUMN proprietaire.dtaucf IS 'taux exo ecf - INDISPONIBLE';
-COMMENT ON COLUMN proprietaire.dnatpr IS 'Code nature de personne physique ou morale - Voir $ 2.2.7';
+COMMENT ON COLUMN proprietaire.dnatpr IS 'Code nature de personne physique ou morale - Voir $$ 2.2.7';
 COMMENT ON COLUMN proprietaire.ccogrm IS 'Code groupe de personne morale - 0 à 9 - 0A à 9A';
 COMMENT ON COLUMN proprietaire.dsglpm IS 'sigle de personne morale - ';
 COMMENT ON COLUMN proprietaire.dforme IS 'forme juridique abrégée majic2 X Données Générales - ';

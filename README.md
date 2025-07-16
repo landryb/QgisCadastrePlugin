@@ -1,6 +1,6 @@
 # Cadastre
 
-[![QGIS.org](https://img.shields.io/badge/QGIS.org-published-green)](https://plugins.qgis.org/plugins/cadastre/)
+[![QGIS.org](https://img.shields.io/badge/QGIS.org-published-green)](https://plugins.qgis.org/plugins/cadastre/#plugin-versions)
 [![❄ Flake8](https://github.com/3liz/QgisCadastrePlugin/actions/workflows/test-lint.yml/badge.svg)](https://github.com/3liz/QgisCadastrePlugin/actions/workflows/test-lint.yml)
 [![🎳 Tests](https://github.com/3liz/QgisCadastrePlugin/actions/workflows/test-python.yml/badge.svg)](https://github.com/3liz/QgisCadastrePlugin/actions/workflows/test-python.yml)
 [![📖 Documentation](https://github.com/3liz/QgisCadastrePlugin/actions/workflows/publish-doc.yml/badge.svg)](https://github.com/3liz/QgisCadastrePlugin/actions/workflows/publish-doc.yml)
@@ -44,6 +44,11 @@ Les évolutions 2021 ont été soutenues par :
 - La société **[Éléments](https://www.elements.green/)** pour le téléchargeur Édigéo
 - La **[Métropole de Clermont-Ferrand](https://www.clermontmetropole.eu)** :
   maintenance sur l'extension, travail exploratoire sur le remplacement d'ancien code concernant le DBManager et amélioration du code
+
+Les évolutions 2025 ont été soutenues par :
+
+- Le **[CRAIG](https://www.craig.fr/)** (Centre Régional Auvergne-Rhône-Alpes de l'Information Géographique) :
+  Abandon du support des fichiers FANTOIR au bénéfice des fichiers TOPO
 
 ## Conception
 

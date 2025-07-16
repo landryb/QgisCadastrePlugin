@@ -5,7 +5,7 @@ BEGIN;
 INSERT INTO ${PREFIXE}parcelle
 (
  parcelle, annee, ccodep, ccodir, ccocom, ccopre, ccosec, dnupla, dcntpa, dsrpar, dnupro, jdatat, dreflf, gpdl, cprsecr, ccosecr, dnuplar, dnupdl, gurbpa,
- dparpi, ccoarp, gparnf, gparbat, parrev, gpardp, fviti, dnvoiri, dindic, ccovoi, ccoriv, ccocif, gpafpd, ajoutcoherence,
+ dparpi, ccoarp, gparnf, gparbat, parrev, gpardp, fviti, dnvoiri, dindic, ccovoi, ccoriv, ccocif, ccpper, gpafpd, ajoutcoherence,
  comptecommunal, pdl, voie,
  cconvo, dvoilib, ccocomm, ccoprem, ccosecm, dnuplam, parcellefiliation, type_filiation,
  ccoifp, inspireid,
@@ -47,7 +47,7 @@ SELECT
   SUBSTRING(tmp,91,5) AS ccovoi,
   SUBSTRING(tmp,96,4) AS ccoriv,
   SUBSTRING(tmp,100,4) AS ccocif,
-
+  SUBSTRING(tmp,122,3) AS ccpper,
   SUBSTRING(tmp,104,1) AS gpafpd,
   'N',
   REPLACE(SUBSTRING(tmp,1,2)||SUBSTRING(tmp,3,4)||SUBSTRING(tmp,32,6),' ', '0') AS comptecommunal,
@@ -124,7 +124,7 @@ FROM ${PREFIXE}nbat WHERE SUBSTRING(tmp,20,2) ='21';
 -- Traitement: sufexoneration
 INSERT INTO ${PREFIXE}sufexoneration
 (
- sufexoneration, annee, ccodep, ccodir, ccocom, ccopre, ccosec, dnupla, ccosub, rnuexn, vecexn, ccolloc, pexn, gnexts, jandeb, jfinex, fcexn, fcexna, rcexna,
+ sufexoneration, annee, ccodep, ccodir, ccocom, ccopre, ccosec, dnupla, ccosub, rnuexn, ccolloc, pexn, gnexts, jandeb, jfinex, fcexn, fcexna, rcexna,
  rcexnba, mpexnba, suf, lot
 )
 SELECT
@@ -138,7 +138,6 @@ SELECT
   SUBSTRING(tmp,12,4) AS dnupla,
   CASE WHEN SUBSTRING(tmp,16,2) IS NULL THEN '' ELSE trim(SUBSTRING(tmp,16,2)) END AS ccosub,
   SUBSTRING(tmp,18,2) AS rnuexn,
-  CASE WHEN trim(SUBSTRING(tmp,22,10))='' THEN NULL ELSE to_number(SUBSTRING(tmp,22,10),'9999999999')/100 END AS vecexn,
   CASE WHEN trim(SUBSTRING(tmp,32,2))='' THEN NULL ELSE trim(SUBSTRING(tmp,32,2)) END AS ccolloc,
   CASE WHEN trim(SUBSTRING(tmp,34,5))='' THEN NULL ELSE to_number(SUBSTRING(tmp,34,5),'99999') END AS pexn,
   CASE WHEN trim(SUBSTRING(tmp,39,2))='' THEN NULL ELSE trim(SUBSTRING(tmp,39,2)) END AS gnexts,
@@ -186,7 +185,7 @@ FROM ${PREFIXE}nbat WHERE SUBSTRING(tmp,20,2) ='36';
 INSERT INTO ${PREFIXE}local00
 (
  local00, annee, ccodep, ccodir, ccocom, invar, ccopre, ccosec, dnupla, dnubat, descr, dniv, dpor, ccoriv, ccovoi, dnvoiri, dindic, ccocif, dvoilib, cleinvar,
- locinc, parcelle, voie, lot
+ assietf, ccpper, codique, parcelle, voie, lot
 )
 SELECT
   REPLACE(SUBSTRING(tmp,1,3)||SUBSTRING(tmp,7,10),' ','0') AS local00,
@@ -212,8 +211,9 @@ SELECT
   SUBSTRING(tmp,72,4) AS ccocif,
   SUBSTRING(tmp,76,30) AS dvoilib,
   SUBSTRING(tmp,106,1) AS cleinvar,
-
-  SUBSTRING(tmp,107,1) AS locinc,
+  SUBSTRING(tmp,108,10) AS assietf,
+  SUBSTRING(tmp,125,3) AS ccpper,
+  SUBSTRING(tmp,128,7) AS codique,
   REPLACE(SUBSTRING(tmp,1,6)||SUBSTRING(tmp,36,9),' ', '0') AS parcelle,
   REPLACE(SUBSTRING(tmp,1,6)||SUBSTRING(tmp,62,5),' ', '0')||SUBSTRING(tmp,57,4) AS voie,
   '${LOT}' as lot
@@ -223,7 +223,7 @@ FROM ${PREFIXE}bati WHERE SUBSTRING(tmp,31,2) ='00';
 INSERT INTO ${PREFIXE}local10
 (
  local10, annee,ccodep, ccodir, ccocom, invar, gpdl, dsrpar, dnupro, jdatat, dnufnl, ccoeva, ccitlv, dteloc, gtauom, dcomrd, ccoplc, cconlc, dvltrt,
- ccoape, cc48lc, dloy48a, top48a, dnatlc, dnupas, gnexcf, dtaucf, cchpr, jannat, dnbniv, hlmsem, postel, dnatcg, jdatcgl, dnutbx, dvltla,
+ ccoape, cc48lc, dloy48a, top48a, dnupas, gnexcf, dtaucf, cchpr, jannat, dnbniv, hlmsem, postel, dnatcg, jdatcgl, dnutbx, dvltla,
  janloc, ccsloc, fburx, gimtom, cbtabt, jdtabt, jrtabt, jacloc, cconac,
  toprev, ccoifp,
  comptecommunal, lot
@@ -257,7 +257,6 @@ SELECT
   SUBSTRING(tmp,82,2) AS cc48lc,
   CASE WHEN trim(SUBSTRING(tmp,84,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,84,9),'999999999') END AS dloy48a,
   CASE WHEN trim(SUBSTRING(tmp,93,1))='' THEN NULL ELSE trim(SUBSTRING(tmp,93,1)) END AS top48a,
-  CASE WHEN trim(SUBSTRING(tmp,94,1))='' THEN NULL ELSE trim(SUBSTRING(tmp,94,1)) END AS dnatlc,
 
   SUBSTRING(tmp,95,8) AS dnupas,
   SUBSTRING(tmp,103,2) AS gnexcf,
@@ -316,9 +315,9 @@ INSERT INTO ${PREFIXE}pev
  dnupev,
  ccoaff, ccostb, dcapec, dcetlc,
  ccocac, dnutrf, dcfloc, dsupot, dvlper, dvlpera, gnexpl,
- ccthp, retimp, dnuref, gnidom,
+ retimp, dnuref, gnidom,
  dvltpe,
- tpevtieom, ccortar, ccorvl, dtaurv, dcmloc, dcsplca, dcsglca, dcralca,
+ tpevtieom, ccortar, ccorvl, dtaurv, dcmloc, dcsplca, dcsglca, dcralca, jancmp,
  local10, lot
  )
 SELECT
@@ -344,7 +343,6 @@ SELECT
   CASE when trim(SUBSTRING(tmp,70,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,70,9),'999999999') END AS dvlpera,
   CASE WHEN trim(SUBSTRING(tmp,79,2))='' THEN NULL ELSE trim(SUBSTRING(tmp,79,2)) END AS gnexpl,
 
-  SUBSTRING(tmp,111,1) AS ccthp,
   SUBSTRING(tmp,112,1) AS retimp,
   SUBSTRING(tmp,113,3) AS dnuref,
   SUBSTRING(tmp,116,1) AS gnidom,
@@ -360,6 +358,7 @@ SELECT
   SUBSTRING(tmp,156,5) AS dcsplca,
   SUBSTRING(tmp,161,5) AS dcsglca,
   SUBSTRING(tmp,166,5) AS dcralca,
+  SUBSTRING(tmp,171,4) AS jancmp,
 
 
   SUBSTRING(tmp,1,3)||SUBSTRING(tmp,7,10) AS local10,
@@ -415,6 +414,106 @@ SELECT
 
   '${LOT}' as lot
 FROM ${PREFIXE}bati WHERE SUBSTRING(tmp,31,2) ='30';
+
+-- Traitement: pevexoneration_imposable
+INSERT INTO ${PREFIXE}pevexoneration_imposable
+(
+ pevexoneration_imposable, annee,ccodep, ccodir, ccocom, invar, Janbil, dnupev, dnuexb, ccolloc, pexb, gnextl, jandeb, janimp, vecdif, vecdifa, fcexb, fcexba, rcexba,
+ dvldif2, dvldif2a, fcexb2, fcexba2, rcexba2,
+ valplaf,
+ pev, lot
+)
+SELECT
+  REPLACE(SUBSTRING(tmp,1,3)||SUBSTRING(tmp,7,10)||SUBSTRING(tmp,28,3)||SUBSTRING(tmp,33,3)||CASE WHEN SUBSTRING(tmp,24,4) IS NOT NULL THEN trim(SUBSTRING(tmp,24,4)) ELSE SUBSTRING(tmp,24,4) END, ' ','0') AS pevexoneration_imposable,
+  '${ANNEE}',
+  SUBSTRING(tmp,1,2) AS ccodep,
+  SUBSTRING(tmp,3,1) AS ccodir,
+  SUBSTRING(tmp,4,3) AS ccocom,
+  SUBSTRING(tmp,7,10) AS invar,
+
+  CASE WHEN SUBSTRING(tmp,24,4) IS NOT NULL THEN trim(SUBSTRING(tmp,24,4)) ELSE SUBSTRING(tmp,24,4) END AS janbil,
+  SUBSTRING(tmp,28,3) AS dnupev,
+
+  SUBSTRING(tmp,33,3) AS dnuexb,
+  CASE WHEN trim(SUBSTRING(tmp,36,2))='' THEN NULL ELSE trim(SUBSTRING(tmp,36,2)) END AS ccolloc,
+  CASE WHEN trim(SUBSTRING(tmp,38,5))='' THEN NULL ELSE to_number(SUBSTRING(tmp,38,5),'99999')/100 END AS pexb,
+  CASE WHEN trim(SUBSTRING(tmp,43,2))='' THEN NULL ELSE trim(SUBSTRING(tmp,43,2)) END AS gnextl,
+  SUBSTRING(tmp,45,4) AS jandeb,
+  SUBSTRING(tmp,49,4) AS janimp,
+
+  SUBSTRING(tmp,53,9) AS vecdif,
+  SUBSTRING(tmp,63,9) AS vecdifa,
+  SUBSTRING(tmp,73,9) AS fcexb,
+  SUBSTRING(tmp,83,9) AS fcexba,
+  SUBSTRING(tmp,93,9) AS rcexba,
+
+  CASE WHEN trim(SUBSTRING(tmp,103,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,103,9),'999999999') END AS dvldif2,
+
+  CASE WHEN trim(SUBSTRING(tmp,113,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,113,9),'999999999') END AS dvldif2a,
+
+  CASE WHEN trim(SUBSTRING(tmp,123,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,123,9),'999999999') END AS fcexb2,
+
+  CASE WHEN trim(SUBSTRING(tmp,133,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,133,9),'999999999') END AS fcexba2,
+
+  CASE WHEN trim(SUBSTRING(tmp,143,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,143,9),'999999999') END AS rcexba2,
+
+  CASE WHEN trim(SUBSTRING(tmp,173,10))='' THEN NULL ELSE SUBSTRING(tmp,173,10) END AS valplaf,
+
+
+  REPLACE(SUBSTRING(tmp,1,3)||SUBSTRING(tmp,7,10)||SUBSTRING(tmp,28,3),' ', '0') AS pev,
+
+  '${LOT}' as lot
+FROM ${PREFIXE}bati WHERE SUBSTRING(tmp,31,2) ='30';
+
+-- Traitement: pevexoneration_imposee
+INSERT INTO ${PREFIXE}pevexoneration_imposee
+(
+ pevexoneration_imposee, annee,ccodep, ccodir, ccocom, invar, Janbil, dnupev, dnuexb, ccolloc, pexb, gnextl, jandeb, janimp, vecdif, vecdifa, fcexb, fcexba, rcexba,
+ dvldif2, dvldif2a, fcexb2, fcexba2, rcexba2,
+ valplaf,
+ pev, lot
+)
+SELECT
+  REPLACE(SUBSTRING(tmp,1,3)||SUBSTRING(tmp,7,10)||SUBSTRING(tmp,28,3)||SUBSTRING(tmp,33,3)||CASE WHEN SUBSTRING(tmp,24,4) IS NOT NULL THEN trim(SUBSTRING(tmp,24,4)) ELSE SUBSTRING(tmp,24,4) END, ' ','0') AS pevexoneration_imposee,
+  '${ANNEE}',
+  SUBSTRING(tmp,1,2) AS ccodep,
+  SUBSTRING(tmp,3,1) AS ccodir,
+  SUBSTRING(tmp,4,3) AS ccocom,
+  SUBSTRING(tmp,7,10) AS invar,
+
+  CASE WHEN SUBSTRING(tmp,24,4) IS NOT NULL THEN trim(SUBSTRING(tmp,24,4)) ELSE SUBSTRING(tmp,24,4) END AS janbil,
+  SUBSTRING(tmp,28,3) AS dnupev,
+
+  SUBSTRING(tmp,33,3) AS dnuexb,
+  CASE WHEN trim(SUBSTRING(tmp,36,2))='' THEN NULL ELSE trim(SUBSTRING(tmp,36,2)) END AS ccolloc,
+  CASE WHEN trim(SUBSTRING(tmp,38,5))='' THEN NULL ELSE to_number(SUBSTRING(tmp,38,5),'99999')/100 END AS pexb,
+  CASE WHEN trim(SUBSTRING(tmp,43,2))='' THEN NULL ELSE trim(SUBSTRING(tmp,43,2)) END AS gnextl,
+  SUBSTRING(tmp,45,4) AS jandeb,
+  SUBSTRING(tmp,49,4) AS janimp,
+
+  SUBSTRING(tmp,53,9) AS vecdif,
+  SUBSTRING(tmp,63,9) AS vecdifa,
+  SUBSTRING(tmp,73,9) AS fcexb,
+  SUBSTRING(tmp,83,9) AS fcexba,
+  SUBSTRING(tmp,93,9) AS rcexba,
+
+  CASE WHEN trim(SUBSTRING(tmp,103,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,103,9),'999999999') END AS dvldif2,
+
+  CASE WHEN trim(SUBSTRING(tmp,113,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,113,9),'999999999') END AS dvldif2a,
+
+  CASE WHEN trim(SUBSTRING(tmp,123,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,123,9),'999999999') END AS fcexb2,
+
+  CASE WHEN trim(SUBSTRING(tmp,133,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,133,9),'999999999') END AS fcexba2,
+
+  CASE WHEN trim(SUBSTRING(tmp,143,9))='' THEN NULL ELSE to_number(SUBSTRING(tmp,143,9),'999999999') END AS rcexba2,
+
+  CASE WHEN trim(SUBSTRING(tmp,173,10))='' THEN NULL ELSE SUBSTRING(tmp,173,10) END AS valplaf,
+
+
+  REPLACE(SUBSTRING(tmp,1,3)||SUBSTRING(tmp,7,10)||SUBSTRING(tmp,28,3),' ', '0') AS pev,
+
+  '${LOT}' as lot
+FROM ${PREFIXE}bati WHERE SUBSTRING(tmp,31,2) ='31';
 
 -- Traitement: pevtaxation
 INSERT INTO ${PREFIXE}pevtaxation
@@ -564,7 +663,7 @@ INSERT INTO ${PREFIXE}pevlissage
  dnupev,
  mlbcom, mlbsyn, mlbcu , mlbdep,
  mlbts1, mlbts2, mlbtas,
- mlbgem, mlbtom, tbfpas,
+ mlbgem, mlbtom, tbfpas, mlbtfc,
  pev, lot
 )
 SELECT DISTINCT
@@ -588,6 +687,7 @@ SELECT DISTINCT
   CASE WHEN trim(SUBSTRING(tmp,120,11))='' THEN NULL ELSE to_number(SUBSTRING(tmp,120,11),'99999999999') END AS mlbgem,
   CASE WHEN trim(SUBSTRING(tmp,132,11))='' THEN NULL ELSE to_number(SUBSTRING(tmp,132,11),'99999999999') END AS mlbtom,
   CASE WHEN trim(SUBSTRING(tmp,144,11))='' THEN NULL ELSE to_number(SUBSTRING(tmp,144,11),'99999999999') END AS tbfpas,
+  CASE WHEN trim(SUBSTRING(tmp,168,11))='' THEN NULL ELSE to_number(SUBSTRING(tmp,168,11),'99999999999') END AS mlbtfc,
 
   REPLACE(SUBSTRING(tmp,1,3)||SUBSTRING(tmp,7,10)||SUBSTRING(tmp,28,3),' ', '0') AS pev,
   '${LOT}' AS lot
@@ -650,9 +750,9 @@ SELECT
   SUBSTRING(tmp,1,2) AS ccodep,
   SUBSTRING(tmp,3,1) AS ccodir,
   SUBSTRING(tmp,4,3) AS ccocom,
-  SUBSTRING(tmp,17,30) AS libcom,
+  trim(SUBSTRING(tmp,17)) AS libcom,
   '${LOT}' as lot
-FROM ${PREFIXE}bati WHERE trim(SUBSTRING(tmp,31,2))='' AND trim(SUBSTRING(tmp,4,3)) != '';
+FROM ${PREFIXE}bati WHERE trim(SUBSTRING(tmp,7,10))='' AND trim(SUBSTRING(tmp,4,3)) != '';
 
 
 -- Traitement: proprietaire
@@ -864,34 +964,43 @@ FROM ${PREFIXE}lloc;
 -- Traitement: commune
 INSERT INTO ${PREFIXE}commune
 (
- commune, geo_commune, annee, ccodep, ccodir, ccocom, clerivili, libcom, typcom, ruract, carvoi, indpop, poprel, poppart, popfict, annul, dteannul, dtecreart, codvoi,
+ commune, geo_commune, annee, ccodep, ccodir, ccocom, clerivili, libcom, typcom,
+ ruract, carvoi, indpop, poprel, poppart, popfict, annul, dteannul, dtecreart, codvoi,
  typvoi, indldnbat, motclas, lot
 )
 SELECT
-  REPLACE(SUBSTRING(tmp,1,6),' ', '0') AS commune,
-  REPLACE(SUBSTRING(tmp,1,6),' ', '0') AS geo_commune,
-  '${ANNEE}',
-  SUBSTRING(tmp,1,2) AS ccodep,
-  SUBSTRING(tmp,3,1) AS ccodir,
-  SUBSTRING(tmp,4,3) AS ccocom,
-  SUBSTRING(tmp,11,1) AS clerivili,
-  SUBSTRING(tmp,12,30) AS libcom,
-  CASE WHEN trim(SUBSTRING(tmp,43,1))='' THEN NULL ELSE trim(SUBSTRING(tmp,43,1)) END AS typcom,
-  SUBSTRING(tmp,46,1) AS ruract,
-  SUBSTRING(tmp,49,1) AS carvoi,
-  SUBSTRING(tmp,50,1) AS indpop,
-  CASE WHEN trim(SUBSTRING(tmp,53,7))='' THEN NULL ELSE to_number(trim(SUBSTRING(tmp,53,7)),'0000000') END AS poprel,
-  to_number(SUBSTRING(tmp,60,7),'9999999') AS poppart,
-  to_number(SUBSTRING(tmp,67,7),'0000000') AS popfict,
-  SUBSTRING(tmp,74,1) AS annul,
-  SUBSTRING(tmp,75,7) AS dteannul,
-  SUBSTRING(tmp,82,7) AS dtecreart,
-  SUBSTRING(tmp,104,5) AS codvoi,
-  SUBSTRING(tmp,109,1) AS typvoi,
-  SUBSTRING(tmp,110,1) AS indldnbat,
-  SUBSTRING(tmp,113,8) AS motclas,
+  '${DEPDIR}' || SUBSTRING(code_topo, 10, 3) AS commune,
+  '${DEPDIR}' || SUBSTRING(code_topo, 10, 3) AS geo_commune,
+  '${ANNEE}' AS annee,
+  SUBSTRING(code_topo, 8, 2) AS ccodep,
+  SUBSTRING('${DEPDIR}', 3, 1) AS ccodir,
+  SUBSTRING(code_topo, 10, 3) AS ccocom,
+  NULL AS clerivili,
+  trim("libelle") AS libcom,
+  nullif(type_commune_actuel_r_ou_n, '') AS typcom,
+  nullif(rur_actuel, '') AS ruract,
+  NULL AS carvoi,
+  NULL AS indpop,
+  NULL AS poprel,
+  NULL AS poppart,
+  NULL AS popfict,
+  nullif("annulation", '') AS annul,
+  CASE
+    WHEN date_annulation != '00000000'
+      THEN substr(date_annulation, 1, 4) || to_char(to_date(date_annulation, 'YYYYMMDD'), 'DDD')
+    ELSE '0000000'
+  END AS dteannul,
+  CASE
+    WHEN date_creation_de_article != '00000000'
+      THEN substr(date_creation_de_article, 1, 4) || to_char(to_date(date_creation_de_article, 'YYYYMMDD'), 'DDD')
+    ELSE '0000000'
+  END AS dtecreart,
+  NULL AS codvoi,
+  NULL AS typvoi,
+  NULL AS indldnbat,
+  NULL AS motclas,
   '${LOT}' as lot
-FROM ${PREFIXE}fanr WHERE SUBSTRING(tmp,4,3)  != ' ' AND trim(SUBSTRING(tmp,7,4))='';
+FROM ${PREFIXE}topo WHERE substr(code_topo, 17, 2) = '13';
 
 -- Traitement: voie
 INSERT INTO ${PREFIXE}voie
@@ -901,33 +1010,43 @@ INSERT INTO ${PREFIXE}voie
  commune, lot
 )
 SELECT
-  REPLACE(SUBSTRING(tmp,1,6)||SUBSTRING(tmp,104,5)||SUBSTRING(tmp,7,4),' ', '0') AS voie,
+  REPLACE('${DEPDIR}' || SUBSTRING(code_topo, 10, 3) || '00000' || SUBSTRING(code_topo, 13, 4) , ' ', '0')  AS voie,
   '${ANNEE}',
-  SUBSTRING(tmp,1,2) AS ccodep,
-  SUBSTRING(tmp,3,1) AS ccodir,
-  SUBSTRING(tmp,4,3) AS ccocom,
-  CASE WHEN trim(SUBSTRING(tmp,7,1))='' THEN NULL ELSE trim(SUBSTRING(tmp,7,1)) END AS natvoiriv,
-  SUBSTRING(tmp,7,4) AS ccoriv,
-  SUBSTRING(tmp,11,1) AS clerivili,
-  TRIM(SUBSTRING(tmp,12,4)) AS natvoi,
-  SUBSTRING(tmp,16,26) AS libvoi,
-  CASE WHEN trim(SUBSTRING(tmp,43,1))='' THEN NULL ELSE trim(SUBSTRING(tmp,43,1)) END AS typcom,
-  SUBSTRING(tmp,46,1) AS ruract,
-  CASE WHEN trim(SUBSTRING(tmp,49,1))='' THEN NULL ELSE trim(SUBSTRING(tmp,49,1)) END AS carvoi,
-  SUBSTRING(tmp,50,1) AS indpop,
-  SUBSTRING(tmp,53,7) AS poprel,
-  to_number(SUBSTRING(tmp,60,7),'0000000') AS poppart,
-  to_number(SUBSTRING(tmp,67,7),'0000000') AS popfict,
-  CASE WHEN trim(SUBSTRING(tmp,74,1))='' THEN NULL ELSE trim(SUBSTRING(tmp,74,1)) END AS annul,
-  SUBSTRING(tmp,75,7) AS dteannul,
-  SUBSTRING(tmp,82,7) AS dtecreart,
-  SUBSTRING(tmp,104,5) AS codvoi,
-  CASE WHEN trim(SUBSTRING(tmp,109,1))='' THEN NULL ELSE trim(SUBSTRING(tmp,109,1)) END AS typvoi,
-  CASE WHEN trim(SUBSTRING(tmp,110,1))='' THEN NULL ELSE trim(SUBSTRING(tmp,110,1)) END AS indldnbat,
-  SUBSTRING(tmp,113,8) AS motclas,
-  REPLACE(SUBSTRING(tmp,1,6),' ', '0') AS commune,
+  SUBSTRING(code_topo, 8, 2) AS ccodep,
+  SUBSTRING('${DEPDIR}', 3, 1) AS ccodir,
+  SUBSTRING(code_topo, 10, 3) AS ccocom,
+  SUBSTRING(code_topo, 13, 1) AS natvoiriv,
+  SUBSTRING(code_topo, 13, 4) AS ccoriv,
+  NULL AS clerivili,
+  nullif(nature_de_la_voie, '') AS natvoi,
+  trim(libelle) AS libvoi,
+  nullif(type_commune_actuel_r_ou_n, '') AS typcom,
+  nullif(rur_actuel, '') AS ruract,
+  nullif(caractere_voie, '') AS carvoi,
+  NULL AS indpop,
+  NULL AS poprel,
+  NULL AS poppart,
+  NULL AS popfict,
+  nullif("annulation", '') AS annul,
+  CASE
+    WHEN date_annulation != '00000000'
+      THEN substr(date_annulation, 1, 4) || to_char(to_date(date_annulation, 'YYYYMMDD'), 'DDD')
+    ELSE '0000000'
+  END AS dteannul,
+  CASE
+    WHEN date_creation_de_article != '00000000'
+      THEN substr(date_creation_de_article, 1, 4) || to_char(to_date(date_creation_de_article, 'YYYYMMDD'), 'DDD')
+    ELSE '0000000'
+  END AS dtecreart,
+  NULL AS codvoi,
+  type_voie AS typvoi,
+  1 AS indldnbat,
+  trim(mot_classant) AS motclas,
+  '${DEPDIR}' || SUBSTRING(code_topo, 10, 3) AS commune,
   '${LOT}' as lot
-FROM ${PREFIXE}fanr WHERE trim(SUBSTRING(tmp,4,3))  != '' AND trim(SUBSTRING(tmp,7,4))  != '';
+FROM ${PREFIXE}topo
+WHERE substr(code_topo, 17, 2) = '14'
+;
 
 -- purge des doublons : voie
 CREATE INDEX idxan_voie ON voie (annee);
@@ -937,7 +1056,8 @@ CREATE INDEX idxan_suf ON suf (annee);
 CREATE INDEX idxan_sufexoneration ON sufexoneration (annee);
 CREATE INDEX idxan_suftaxation ON suftaxation (annee);
 CREATE INDEX idxan_pev ON pev (annee);
-CREATE INDEX idxan_pevexoneration ON pevexoneration (annee);
+CREATE INDEX idxan_pevexoneration_imposable ON pevexoneration_imposable (annee);
+CREATE INDEX idxan_pevexoneration_imposee ON pevexoneration_imposee (annee);
 CREATE INDEX idxan_pevtaxation ON pevtaxation (annee);
 CREATE INDEX idxan_pevprincipale ON pevprincipale (annee);
 CREATE INDEX idxan_pevprofessionnelle ON pevprofessionnelle (annee);
@@ -961,7 +1081,8 @@ CREATE INDEX idx_local00_parcelle  ON local00 (parcelle);
 CREATE INDEX idx_local00_voie  ON local00 (voie);
 CREATE INDEX idx_local10_local00  ON local10 (local00);
 CREATE INDEX idx_local10_comptecommunal  ON local10 (comptecommunal);
-CREATE INDEX idx_pevexoneration_pev ON pevexoneration (pev);
+CREATE INDEX idx_pevexoneration_imposable_pev ON pevexoneration_imposable (pev);
+CREATE INDEX idx_pevexoneration_imposee_pev ON pevexoneration_imposee (pev);
 CREATE INDEX idx_pevtaxation_pev ON pevtaxation (pev);
 CREATE INDEX idx_parcelle_voie ON parcelle (voie);
 CREATE INDEX idx_parcelle_comptecommunal ON parcelle (comptecommunal);
@@ -974,7 +1095,8 @@ ANALYZE ${PREFIXE}suftaxation;
 ANALYZE ${PREFIXE}local00;
 ANALYZE ${PREFIXE}local10;
 ANALYZE ${PREFIXE}pev;
-ANALYZE ${PREFIXE}pevexoneration;
+ANALYZE ${PREFIXE}pevexoneration_imposable;
+ANALYZE ${PREFIXE}pevexoneration_imposee;
 ANALYZE ${PREFIXE}pevtaxation;
 ANALYZE ${PREFIXE}pevprincipale;
 ANALYZE ${PREFIXE}pevprofessionnelle;

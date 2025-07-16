@@ -56,8 +56,8 @@ class CadastreImportDialog(QDialog, IMPORT_FORM_CLASS):
             self.btCreateNewSpatialiteDb.setEnabled(False)
 
         # Signals/Slot Connections
-        self.liDbType.currentIndexChanged[str].connect(self.qc.updateConnectionList)
-        self.liDbConnection.currentIndexChanged[str].connect(self.qc.updateSchemaList)
+        self.liDbType.currentIndexChanged.connect(self.qc.updateConnectionList)
+        self.liDbConnection.currentIndexChanged.connect(self.qc.updateSchemaList)
         self.btDbCreateSchema.clicked.connect(self.createSchema)
         self.btCreateNewSpatialiteDb.clicked.connect(self.qc.createNewSpatialiteDatabase)
         self.btProcessImport.clicked.connect(self.processImport)
@@ -180,10 +180,13 @@ class CadastreImportDialog(QDialog, IMPORT_FORM_CLASS):
         Ask the user to select a folder
         and write down the path to appropriate field
         """
+        root_directory = str(self.pathSelectors[key]['input'].text()).strip(' \t')
+        if not root_directory:
+            root_directory = os.path.expanduser("~")
         ipath = QFileDialog.getExistingDirectory(
             None,
             "Choisir le répertoire contenant les fichiers",
-            str(self.pathSelectors[key]['input'].text().encode('utf-8')).strip(' \t')
+            root_directory
         )
         if os.path.exists(str(ipath)):
             self.pathSelectors[key]['input'].setText(str(ipath))
@@ -212,7 +215,7 @@ class CadastreImportDialog(QDialog, IMPORT_FORM_CLASS):
         self.qc.load_default_values()
 
     def createSchema(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             if self.db is None:
                 QMessageBox.warning(
@@ -309,7 +312,7 @@ class CadastreImportDialog(QDialog, IMPORT_FORM_CLASS):
         qi = cadastreImport(self)
 
         # Check if structure already exists in the database/schema
-        self.qc.checkDatabaseForExistingStructure()
+        self.qc.check_database_for_existing_structure()
 
         # Run Script for creating tables
         if not self.hasStructure:
