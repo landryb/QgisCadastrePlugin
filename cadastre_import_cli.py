@@ -453,11 +453,13 @@ class cadastreImport(QObject):
                     if re.search(file_regex, os.path.split(file_sub_path)[1].upper()):
                         # Add file path to the list
                         file_path = os.path.join(root, file_sub_path)
-                        maj_list.append(file_path)
 
                         # ignore PDF/ODT files
                         if file_path.endswith((".PDF", ".pdf", ".ODT", ".odt")):
+                            print(f"ignoring {file_path}")
                             continue
+
+                        maj_list.append(file_path)
 
                         # avoid topo, since direction is not used in TOPO
                         if table == 'topo':
@@ -674,8 +676,7 @@ class cadastreImport(QObject):
             self.totalSteps += len(majic_files_found[table])
             processed_files_count += len(majic_files_found[table])
             for file_path in majic_files_found[table]:
-                self.qc.updateLog(f'<b>{table}</b>')
-                self.qc.updateLog(file_path)
+                self.qc.updateLog(f'found {file_path} as a candidate for table {table}')
                 if table == 'topo':
                     import_file = self.import_file_with_ogr(file_path, 'topo')
                 else:
