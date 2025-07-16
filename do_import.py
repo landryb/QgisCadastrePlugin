@@ -84,9 +84,10 @@ class CadastreCommon():
                 return
 
             combo = getattr(self.dialog, widget.ui)
-            index = combo.findText(value, Qt.MatchFixedString)
+            index = combo.findText(value, Qt.MatchFlag.MatchFixedString)
             if not index:
                 return
+
             combo.setCurrentIndex(index)
 
     def updateConnectionList(self):
