@@ -6,7 +6,7 @@ A partir du [plugin Qadastre pour QGIS] (https://github.com/3liz/QgisCadastrePlu
 Dépendances
 ===========
 
-Sur un système debian buster, les paquets suivants sont nécessaires ( a prendre depuis le dépot `qgis-ltr` de https://www.qgis.org/fr/site/forusers/alldownloads.html) :
+Sur un système debian stable, les paquets suivants sont nécessaires ( a prendre depuis le dépot `qgis-ltr` de https://www.qgis.org/fr/site/forusers/alldownloads.html) :
 ```
 python3-qgis
 
@@ -47,3 +47,10 @@ python3 do_import.py
 ```
 
 Le script va lire le fichier *config.ini* dans le répertoire courant, et importer les données dans la base ciblée. La sortie écran est la même que ce qui serait affiché dans le plugin QGIS.
+
+Développement
+=============
+- le plugin `db_manager` a été importé localement uniquement pour pouvoir lire les settings depuis une variable d'environnement (cf 8769e05e2ce)
+- lors d'une mise a jour, merger ce qui a changé dans la branche `master` de:
+  - `cadastre_import.py` vers `cadastre_import_cli.py`
+  - `cadastre/cadastre_dialogs.py` vers `do_import.py`
