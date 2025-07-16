@@ -262,7 +262,7 @@ class CadastreCommon():
             return False
 
         if self.dialog.dbType == 'postgis':
-            sql = "SELECT * FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s'" % (
+            sql = "SELECT * FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(
             schemaName, tableName)
 
         if self.dialog.dbType == 'spatialite':
@@ -315,12 +315,12 @@ class CadastreCommon():
         # Let the user choose new file path
         ipath, __ = QFileDialog.getSaveFileName(
             None,
-            u"Choisir l'emplacement du nouveau fichier",
+            "Choisir l'emplacement du nouveau fichier",
             str(os.path.expanduser("~").encode('utf-8')).strip(' \t'),
             "Sqlite database (*.sqlite)"
         )
         if not ipath:
-            self.updateLog(u"Aucune base de données créée (annulation)")
+            self.updateLog("Aucune base de données créée (annulation)")
             return None
 
         # Delete file if exists (question already asked above)
@@ -338,7 +338,7 @@ class CadastreCommon():
             con.close()
             del con
         except:
-            self.updateLog(u"Échec lors de la création du fichier Spatialite !")
+            self.updateLog("Échec lors de la création du fichier Spatialite !")
             return None
 
         # Create QGIS connexion
