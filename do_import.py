@@ -525,7 +525,7 @@ class cadastre_import_cli(QObject):
         qi = cadastreImport(self)
 
         # Check if structure already exists in the database/schema
-        self.qc.checkDatabaseForExistingStructure()
+        self.qc.check_database_for_existing_structure()
 
         # Run Script for creating tables
         if not self.hasStructure:
