@@ -32,7 +32,6 @@ import sys
 import tempfile
 
 from datetime import datetime
-from distutils import dir_util
 from pathlib import Path
 
 from db_manager.db_plugins.plugin import BaseError
@@ -860,18 +859,19 @@ class cadastreImport(QObject):
     # TOOLS
     #
 
-    def copyFilesToTemp(self, source, target):
+    def copyFilesToTemp(self, source: str, target: str):
         """
         Copy cadastre scripts
         into a temporary folder
         """
         if self.go:
 
-            self.qc.updateLog('* Copie du répertoire %s' % source)
+            self.qc.updateLog(f'* Copie du répertoire {source} vers {target}')
 
             # copy script directory
             try:
-                dir_util.copy_tree(source, target)
+                # Avoid hang from shutil.copytree() with dirs_exist_ok=True
+                shutil.copytree(source, target, dirs_exist_ok=True)
                 os.chmod(target, 0o777)
             except OSError as e:
                 msg = "<b>Erreur lors de la copie des scripts d'import: %s</b>" % e
