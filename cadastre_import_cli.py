@@ -154,7 +154,7 @@ class cadastreImport(QObject):
         else:
             self.replaceDict['PREFIXE'] = ''
         self.go = True
-        self.startTime = datetime.now()
+        self.last = self.startTime = datetime.now()
         self.step = 0
         self.totalSteps = 0
 
@@ -191,7 +191,9 @@ class cadastreImport(QObject):
         if self.go:
             b = datetime.now()
             diff = b - self.startTime
-            self.qc.updateLog('%s s' % diff.seconds)
+            last = b - self.last
+            self.last = b
+            self.qc.updateLog(f"{diff.seconds}s since start ({last.seconds} since previous checkpoint)")
 
     def beginImport(self):
         """
