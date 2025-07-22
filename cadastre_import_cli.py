@@ -176,7 +176,7 @@ class cadastreImport(QObject):
         """
         self.totalSteps = step_number
         self.step = 0
-        self.qc.updateLog('<h3>%s</h3>' % title)
+        self.qc.updateLog(f"step {step_number} : {title}")
 
     def updateProgressBar(self):
         """
@@ -256,7 +256,7 @@ class cadastreImport(QObject):
         for item in script_list:
             if self.go:
                 s = item['script']
-                self.qc.updateLog('%s' % item['title'])
+                self.qc.updateLog(f"STRUCTURE - {item['title']} -> {s}")
                 self.updateProgressBar()
                 self.replaceParametersInScript(s, replace_dict)
                 self.executeSqlScript(s, 'constraints' in item)
@@ -333,7 +333,7 @@ class cadastreImport(QObject):
         # Remove indexes
         script_list.append(
             {
-                'title': 'Suppression des indexes',
+                'title': 'Suppression des indexes MAJIC',
                 'script': os.path.join(self.pScriptDir, 'majic3_drop_indexes.sql')
             }
         )
@@ -371,7 +371,7 @@ class cadastreImport(QObject):
             replace_dict['DEPDIR'] = f'{self.dialog.edigeoDepartement}{self.dialog.edigeoDirection}'
             script_list.append(
                 {
-                    'title': 'Suppression des indexes',
+                    'title': 'Suppression des indexes EDIGEO',
                     'script': os.path.join(self.pScriptDir, 'edigeo_drop_indexes.sql')
                 }
             )
@@ -415,9 +415,9 @@ class cadastreImport(QObject):
         # Run previously defined SQL queries
         for item in script_list:
             if self.go:
-                self.qc.updateLog('%s' % item['title'])
                 if 'script' in item:
                     s = item['script']
+                    self.qc.updateLog(f"IMPORTMAJIC - {item['title']} -> {s}")
                     self.replaceParametersInScript(s, replace_dict)
                     self.updateProgressBar()
                     if 'divide' in item:
@@ -425,6 +425,7 @@ class cadastreImport(QObject):
                     else:
                         self.executeSqlScript(s, False, 'constraints' in item)
                 else:
+                    self.qc.updateLog(f"IMPORTMAJIC - {item['title']} -> {item['method']}")
                     self.updateProgressBar()
                     item['method']()
 
@@ -766,15 +767,15 @@ class cadastreImport(QObject):
         if self.dialog.hasData:
             scriptList.append(
                 {
-                    'title': 'Suppression des indexes',
+                    'title': 'Suppression des indexes EDIGEO',
                     'script': '%s' % os.path.join(self.pScriptDir, 'edigeo_drop_indexes.sql')
                 }
             )
 
         for item in scriptList:
             if self.go:
-                self.qc.updateLog('%s' % item['title'])
                 s = item['script']
+                self.qc.updateLog(f"IMPORTEDIGEO - {item['title']} -> {s}")
                 self.replaceParametersInScript(s, replaceDict)
                 self.updateProgressBar()
                 self.executeSqlScript(s, 'divide' in item, 'constraints' in item)
@@ -785,7 +786,7 @@ class cadastreImport(QObject):
 
         # import edigeo *.thf and *.vec files into database
         if self.go:
-            self.qc.updateLog('Import des fichiers')
+            self.qc.updateLog('Import des fichiers EDIGEO')
             self.updateProgressBar()
             self.importAllEdigeoToDatabase()
             self.updateTimer()
@@ -859,8 +860,8 @@ class cadastreImport(QObject):
 
         for item in scriptList:
             if self.go:
-                self.qc.updateLog('%s' % item['title'])
                 s = item['script']
+                self.qc.updateLog(f"IMPORTEDIGEO - {item['title']} -> {s}")
                 self.replaceParametersInScript(s, replaceDict)
                 self.updateProgressBar()
 
