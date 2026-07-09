@@ -15,7 +15,7 @@ from db_manager.dlg_db_error import DlgDbError
 from qgis.core import QgsMapLayer, QgsProject, QgsSettings
 from qgis.PyQt.QtCore import QObject, QSettings, QFileInfo, Qt
 from qgis.PyQt.QtGui import QTextCursor
-from qgis.PyQt.QtWidgets import QApplication, QFileDialog, qApp
+from qgis.PyQt.QtWidgets import QApplication, QFileDialog
 
 import cadastre.cadastre_common_base as common_utils
 
