@@ -12,7 +12,7 @@ from pathlib import Path
 from db_manager.db_plugins import createDbPlugin
 from db_manager.db_plugins.plugin import BaseError
 from db_manager.dlg_db_error import DlgDbError
-from qgis.core import QgsMapLayer, QgsProject, QgsSettings
+from qgis.core import QgsApplication, QgsMapLayer, QgsProject, QgsSettings
 from qgis.PyQt.QtCore import QObject, QSettings, QFileInfo, Qt
 from qgis.PyQt.QtGui import QTextCursor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog
@@ -542,5 +542,9 @@ class cadastre_import_cli(QObject):
         qi.endImport()
 
 
+# Instantiate QGIS
+QgsApplication.setPrefixPath("/usr", True)
+qgs = QgsApplication([], True)
+QgsApplication.initQgis()
 cii = cadastre_import_cli()
 cii.processImport()
