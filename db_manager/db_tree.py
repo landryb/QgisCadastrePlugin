@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -20,14 +18,16 @@ email                : brush.tyler@gmail.com
  ***************************************************************************/
 """
 
-from qgis.PyQt.QtCore import pyqtSignal, QCoreApplication
-from qgis.PyQt.QtWidgets import QWidget, QTreeView, QMenu, QLabel
-
-from qgis.core import Qgis, QgsProject, QgsMessageLog
+from osgeo import gdal
+from qgis.core import Qgis, QgsMessageLog, QgsProject
 from qgis.gui import QgsMessageBar, QgsMessageBarItem
+from qgis.PyQt.QtCore import QCoreApplication, pyqtSignal
+from qgis.PyQt.QtWidgets import QLabel, QMenu, QTreeView, QWidget
 
 from .db_model import DBModel, PluginItem
+from .db_plugins.gpkg.plugin import GPKGRasterTable
 from .db_plugins.plugin import DBPlugin, Schema, Table
+from .db_plugins.vlayers.plugin import LTable
 
 
 class DBTree(QTreeView):
@@ -39,7 +39,9 @@ class DBTree(QTreeView):
 
         self.setModel(DBModel(self))
         self.setHeaderHidden(True)
-        self.setEditTriggers(QTreeView.EditKeyPressed | QTreeView.SelectedClicked)
+        self.setEditTriggers(
+            QTreeView.EditTrigger.EditKeyPressed | QTreeView.EditTrigger.SelectedClicked
+        )
 
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
@@ -88,8 +90,6 @@ class DBTree(QTreeView):
 
     def currentTable(self):
         item = self.currentItem()
-        if item is None:
-            return
 
         if isinstance(item, Table):
             return item
@@ -124,13 +124,19 @@ class DBTree(QTreeView):
 
         menu = QMenu(self)
 
-        if isinstance(item, (Table, Schema)):
-            menu.addAction(QCoreApplication.translate("DBTree", "Rename…"), self.rename)
+        if isinstance(item, (Table, Schema)) and not isinstance(item, LTable):
+            if not (
+                isinstance(item, GPKGRasterTable) and int(gdal.VersionInfo()) < 3100000
+            ):
+                menu.addAction(
+                    QCoreApplication.translate("DBTree", "Rename…"), self.rename
+                )
             menu.addAction(QCoreApplication.translate("DBTree", "Delete…"), self.delete)
 
             if isinstance(item, Table) and item.canBeAddedToCanvas():
                 menu.addSeparator()
                 menu.addAction(self.tr("Add to Canvas"), self.addLayer)
+                item.addExtraContextMenuEntries(menu)
 
         elif isinstance(item, DBPlugin):
             if item.database() is not None:
@@ -138,10 +144,13 @@ class DBTree(QTreeView):
             menu.addAction(self.tr("Remove"), self.delete)
 
         elif not index.parent().isValid() and item.typeName() in ("spatialite", "gpkg"):
-            menu.addAction(QCoreApplication.translate("DBTree", "New Connection…"), self.newConnection)
+            menu.addAction(
+                QCoreApplication.translate("DBTree", "New Connection…"),
+                self.newConnection,
+            )
 
         if not menu.isEmpty():
-            menu.exec_(ev.globalPos())
+            menu.exec(ev.globalPos())
 
         menu.deleteLater()
 
@@ -160,18 +169,32 @@ class DBTree(QTreeView):
     def addLayer(self):
         table = self.currentTable()
         if table is not None:
-            layer = table.toMapLayer()
+            layer = table.toMapLayer(table.geometryType())
             layers = QgsProject.instance().addMapLayers([layer])
             if len(layers) != 1:
                 QgsMessageLog.logMessage(
-                    self.tr("%1 is an invalid layer - not loaded").replace("%1", layer.publicSource()))
-                msgLabel = QLabel(self.tr(
-                    "%1 is an invalid layer and cannot be loaded. Please check the <a href=\"#messageLog\">message log</a> for further info.").replace(
-                    "%1", layer.publicSource()), self.mainWindow.infoBar)
+                    self.tr("%1 is an invalid layer - not loaded").replace(
+                        "%1", layer.publicSource()
+                    )
+                )
+                msgLabel = QLabel(
+                    self.tr(
+                        '%1 is an invalid layer and cannot be loaded. Please check the <a href="#messageLog">message log</a> for further info.'
+                    ).replace("%1", layer.publicSource()),
+                    self.mainWindow.infoBar,
+                )
                 msgLabel.setWordWrap(True)
-                msgLabel.linkActivated.connect(self.mainWindow.iface.mainWindow().findChild(QWidget, "MessageLog").show)
-                msgLabel.linkActivated.connect(self.mainWindow.iface.mainWindow().raise_)
-                self.mainWindow.infoBar.pushItem(QgsMessageBarItem(msgLabel, Qgis.Warning))
+                msgLabel.linkActivated.connect(
+                    self.mainWindow.iface.mainWindow()
+                    .findChild(QWidget, "MessageLog")
+                    .show
+                )
+                msgLabel.linkActivated.connect(
+                    self.mainWindow.iface.mainWindow().raise_
+                )
+                self.mainWindow.infoBar.pushItem(
+                    QgsMessageBarItem(msgLabel, Qgis.MessageLevel.Warning)
+                )
 
     def reconnect(self):
         db = self.currentDatabase()

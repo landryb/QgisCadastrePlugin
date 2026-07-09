@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -22,20 +20,22 @@ The content of this file is based on
  ***************************************************************************/
 """
 
+from qgis.PyQt import uic
 from qgis.PyQt.QtWidgets import QDialog
 
-from .ui.ui_DlgDbError import Ui_DbManagerDlgDbError as Ui_Dialog
 from .db_plugins.plugin import DbError
+from .gui_utils import GuiUtils
+
+Ui_Dialog, _ = uic.loadUiType(GuiUtils.get_ui_file_path("DlgDbError.ui"))
 
 
 class DlgDbError(QDialog, Ui_Dialog):
-
     def __init__(self, e, parent=None):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
         def sanitize(txt):
-            return "" if txt is None else "<pre>" + txt.replace('<', '&lt;') + "</pre>"
+            return "" if txt is None else "<pre>" + txt.replace("<", "&lt;") + "</pre>"
 
         if isinstance(e, DbError):
             self.setQueryMessage(sanitize(e.msg), sanitize(e.query))
@@ -54,4 +54,4 @@ class DlgDbError(QDialog, Ui_Dialog):
     @staticmethod
     def showError(e, parent=None):
         dlg = DlgDbError(e, parent)
-        dlg.exec_()
+        dlg.exec()

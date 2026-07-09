@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -24,36 +22,55 @@ The content of this file is based on
 
 import functools
 
-from qgis.PyQt.QtCore import Qt, QByteArray, QSize
-from qgis.PyQt.QtWidgets import QMainWindow, QApplication, QMenu, QTabWidget, QGridLayout, QSpacerItem, QSizePolicy, QDockWidget, QStatusBar, QMenuBar, QToolBar, QTabBar
-from qgis.PyQt.QtGui import QIcon, QKeySequence
-
+from qgis.core import Qgis, QgsApplication, QgsMapLayerType, QgsSettings
 from qgis.gui import QgsMessageBar
-from qgis.core import Qgis, QgsApplication, QgsSettings, QgsMapLayer
+from qgis.PyQt.QtCore import QByteArray, QSize, Qt
+from qgis.PyQt.QtGui import QIcon, QKeySequence
+from qgis.PyQt.QtWidgets import (
+    QAction,
+    QApplication,
+    QDockWidget,
+    QGridLayout,
+    QMainWindow,
+    QMenu,
+    QMenuBar,
+    QSizePolicy,
+    QSpacerItem,
+    QStatusBar,
+    QTabBar,
+    QTabWidget,
+    QToolBar,
+)
 from qgis.utils import OverrideCursor
 
-from .info_viewer import InfoViewer
-from .table_viewer import TableViewer
-from .layer_preview import LayerPreview
-
-from .db_tree import DBTree
-
 from .db_plugins.plugin import BaseError
+from .db_tree import DBTree
 from .dlg_db_error import DlgDbError
+from .gui_utils import GuiUtils
+from .info_viewer import InfoViewer
+from .layer_preview import LayerPreview
+from .table_viewer import TableViewer
 
 
 class DBManager(QMainWindow):
-
     def __init__(self, iface, parent=None):
         QMainWindow.__init__(self, parent)
-        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setupUi()
         self.iface = iface
 
         # restore the window state
         settings = QgsSettings()
-        self.restoreGeometry(settings.value("/DB_Manager/mainWindow/geometry", QByteArray(), type=QByteArray))
-        self.restoreState(settings.value("/DB_Manager/mainWindow/windowState", QByteArray(), type=QByteArray))
+        self.restoreGeometry(
+            settings.value(
+                "/DB_Manager/mainWindow/geometry", QByteArray(), type=QByteArray
+            )
+        )
+        self.restoreState(
+            settings.value(
+                "/DB_Manager/mainWindow/windowState", QByteArray(), type=QByteArray
+            )
+        )
 
         self.toolBar.setIconSize(self.iface.iconSize())
         self.toolBarOrientation()
@@ -76,7 +93,7 @@ class DBManager(QMainWindow):
         QMainWindow.closeEvent(self, e)
 
     def refreshItem(self, item=None):
-        with OverrideCursor(Qt.WaitCursor):
+        with OverrideCursor(Qt.CursorShape.WaitCursor):
             try:
                 if item is None:
                     item = self.tree.currentItem()
@@ -85,9 +102,11 @@ class DBManager(QMainWindow):
                 DlgDbError.showError(e, self)
 
     def itemChanged(self, item):
-        with OverrideCursor(Qt.WaitCursor):
+        with OverrideCursor(Qt.CursorShape.WaitCursor):
             try:
                 self.reloadButtons()
+                # Force-reload information on the layer
+                self.info.setDirty()
                 # clear preview, this will delete the layer in preview tab
                 self.preview.loadPreview(None)
                 self.refreshTabs()
@@ -96,7 +115,7 @@ class DBManager(QMainWindow):
 
     def reloadButtons(self):
         db = self.tree.currentDatabase()
-        if not hasattr(self, '_lastDb'):
+        if not hasattr(self, "_lastDb"):
             self._lastDb = db
 
         elif db == self._lastDb:
@@ -112,7 +131,7 @@ class DBManager(QMainWindow):
             self._lastDb.registerAllActions(self)
 
     def tabChanged(self, index):
-        with OverrideCursor(Qt.WaitCursor):
+        with OverrideCursor(Qt.CursorShape.WaitCursor):
             try:
                 self.refreshTabs()
             except BaseError as e:
@@ -125,8 +144,12 @@ class DBManager(QMainWindow):
 
         # enable/disable tabs
         self.tabs.setTabEnabled(self.tabs.indexOf(self.table), table is not None)
-        self.tabs.setTabEnabled(self.tabs.indexOf(self.preview), table is not None and table.type in [table.VectorType,
-                                                                                                      table.RasterType] and table.geomColumn is not None)
+        self.tabs.setTabEnabled(
+            self.tabs.indexOf(self.preview),
+            table is not None
+            and table.type in [table.VectorType, table.RasterType]
+            and table.geomColumn is not None,
+        )
         # show the info tab if the current tab is disabled
         if not self.tabs.isTabEnabled(index):
             self.tabs.setCurrentWidget(self.info)
@@ -148,8 +171,11 @@ class DBManager(QMainWindow):
     def importActionSlot(self):
         db = self.tree.currentDatabase()
         if db is None:
-            self.infoBar.pushMessage(self.tr("No database selected or you are not connected to it."),
-                                     Qgis.Info, self.iface.messageTimeout())
+            self.infoBar.pushMessage(
+                self.tr("No database selected or you are not connected to it."),
+                Qgis.MessageLevel.Info,
+                self.iface.messageTimeout(),
+            )
             return
 
         outUri = db.uri()
@@ -160,34 +186,42 @@ class DBManager(QMainWindow):
         from .dlg_import_vector import DlgImportVector
 
         dlg = DlgImportVector(None, db, outUri, self)
-        dlg.exec_()
+        dlg.exec()
 
     def exportActionSlot(self):
         table = self.tree.currentTable()
         if table is None:
-            self.infoBar.pushMessage(self.tr("Select the table you want export to file."), Qgis.Info,
-                                     self.iface.messageTimeout())
+            self.infoBar.pushMessage(
+                self.tr("Select the table you want export to file."),
+                Qgis.MessageLevel.Info,
+                self.iface.messageTimeout(),
+            )
             return
 
         inLayer = table.toMapLayer()
-        if inLayer.type() != QgsMapLayer.VectorLayer:
+        if inLayer.type() != QgsMapLayerType.VectorLayer:
             self.infoBar.pushMessage(
                 self.tr("Select a vector or a tabular layer you want export."),
-                Qgis.Warning, self.iface.messageTimeout())
+                Qgis.MessageLevel.Warning,
+                self.iface.messageTimeout(),
+            )
             return
 
         from .dlg_export_vector import DlgExportVector
 
         dlg = DlgExportVector(inLayer, table.database(), self)
-        dlg.exec_()
+        dlg.exec()
 
         inLayer.deleteLater()
 
     def runSqlWindow(self):
         db = self.tree.currentDatabase()
         if db is None:
-            self.infoBar.pushMessage(self.tr("No database selected or you are not connected to it."),
-                                     Qgis.Info, self.iface.messageTimeout())
+            self.infoBar.pushMessage(
+                self.tr("No database selected or you are not connected to it."),
+                Qgis.MessageLevel.Info,
+                self.iface.messageTimeout(),
+            )
             # force displaying of the message, it appears on the first tab (i.e. Info)
             self.tabs.setCurrentIndex(0)
             return
@@ -200,32 +234,26 @@ class DBManager(QMainWindow):
         index = self.tabs.addTab(query, tabname)
         self.tabs.setTabIcon(index, db.connection().icon())
         self.tabs.setCurrentIndex(index)
-        query.nameChanged.connect(functools.partial(self.update_query_tab_name, index, dbname))
-
-    def runSqlLayerWindow(self, layer):
-        from .dlg_sql_layer_window import DlgSqlLayerWindow
-        query = DlgSqlLayerWindow(self.iface, layer, self)
-        lname = layer.name()
-        tabname = self.tr("Layer ({0})").format(lname)
-        index = self.tabs.addTab(query, tabname)
-        # self.tabs.setTabIcon(index, db.connection().icon())
-        self.tabs.setCurrentIndex(index)
+        query.nameChanged.connect(
+            functools.partial(self.update_query_tab_name, index, dbname)
+        )
 
     def update_query_tab_name(self, index, dbname, queryname):
         if not queryname:
             queryname = self.tr("Query")
-        tabname = u"%s (%s)" % (queryname, dbname)
+        tabname = f"{queryname} ({dbname})"
         self.tabs.setTabText(index, tabname)
 
     def showSystemTables(self):
         self.tree.showSystemTables(self.actionShowSystemTables.isChecked())
 
     def registerAction(self, action, menuName, callback=None):
-        """ register an action to the manager's main menu """
-        if not hasattr(self, '_registeredDbActions'):
+        """register an action to the manager's main menu"""
+        if not hasattr(self, "_registeredDbActions"):
             self._registeredDbActions = {}
 
         if callback is not None:
+
             def invoke_callback(x):
                 return self.invokeCallback(callback)
 
@@ -266,7 +294,9 @@ class DBManager(QMainWindow):
         # get the placeholder's position to insert before it
         pos = 0
         for pos in range(len(menuActions)):
-            if menuActions[pos].isSeparator() and menuActions[pos].objectName().endswith("_placeholder"):
+            if menuActions[pos].isSeparator() and menuActions[
+                pos
+            ].objectName().endswith("_placeholder"):
                 menuActions[pos].setVisible(True)
                 break
 
@@ -288,14 +318,14 @@ class DBManager(QMainWindow):
         return True
 
     def invokeCallback(self, callback, *params):
-        """ Call a method passing the selected item in the database tree,
-                the sender (usually a QAction), the plugin mainWindow and
-                optionally additional parameters.
+        """Call a method passing the selected item in the database tree,
+        the sender (usually a QAction), the plugin mainWindow and
+        optionally additional parameters.
 
-                This method takes care to override and restore the cursor,
-                but also catches exceptions and displays the error dialog.
+        This method takes care to override and restore the cursor,
+        but also catches exceptions and displays the error dialog.
         """
-        with OverrideCursor(Qt.WaitCursor):
+        with OverrideCursor(Qt.CursorShape.WaitCursor):
             try:
                 callback(self.tree.currentItem(), self.sender(), self, *params)
             except BaseError as e:
@@ -303,7 +333,7 @@ class DBManager(QMainWindow):
                 DlgDbError.showError(e, self)
 
     def unregisterAction(self, action, menuName):
-        if not hasattr(self, '_registeredDbActions'):
+        if not hasattr(self, "_registeredDbActions"):
             return
 
         if menuName is None or menuName == "":
@@ -334,7 +364,9 @@ class DBManager(QMainWindow):
                 # hide the placeholder if there're no other registered actions
                 if len(self._registeredDbActions[menuName]) <= 0:
                     for i in range(len(menuActions)):
-                        if menuActions[i].isSeparator() and menuActions[i].objectName().endswith("_placeholder"):
+                        if menuActions[i].isSeparator() and menuActions[
+                            i
+                        ].objectName().endswith("_placeholder"):
                             menuActions[i].setVisible(False)
                             break
 
@@ -344,7 +376,7 @@ class DBManager(QMainWindow):
         return False
 
     def unregisterAllActions(self):
-        if not hasattr(self, '_registeredDbActions'):
+        if not hasattr(self, "_registeredDbActions"):
             return
 
         for menuName in self._registeredDbActions:
@@ -355,13 +387,18 @@ class DBManager(QMainWindow):
     def close_tab(self, index):
         widget = self.tabs.widget(index)
         if widget not in [self.info, self.table, self.preview]:
-            self.tabs.removeTab(index)
-            widget.deleteLater()
+            if hasattr(widget, "close"):
+                if widget.close():
+                    self.tabs.removeTab(index)
+                    widget.deleteLater()
+            else:
+                self.tabs.removeTab(index)
+                widget.deleteLater()
 
     def toolBarOrientation(self):
-        button_style = Qt.ToolButtonIconOnly
-        if self.toolBar.orientation() == Qt.Horizontal:
-            button_style = Qt.ToolButtonTextBesideIcon
+        button_style = Qt.ToolButtonStyle.ToolButtonIconOnly
+        if self.toolBar.orientation() == Qt.Orientation.Horizontal:
+            button_style = Qt.ToolButtonStyle.ToolButtonTextBesideIcon
 
         widget = self.toolBar.widgetForAction(self.actionImport)
         widget.setToolButtonStyle(button_style)
@@ -370,7 +407,7 @@ class DBManager(QMainWindow):
 
     def setupUi(self):
         self.setWindowTitle(self.tr("DB Manager"))
-        self.setWindowIcon(QIcon(":/db_manager/icon"))
+        self.setWindowIcon(GuiUtils.get_icon("dbmanager"))
         self.resize(QSize(700, 500).expandedTo(self.minimumSizeHint()))
 
         # create central tab widget and add the first 3 tabs: info, table and preview
@@ -389,28 +426,34 @@ class DBManager(QMainWindow):
         self.tabs.tabCloseRequested.connect(self.close_tab)
         tabbar = self.tabs.tabBar()
         for i in range(3):
-            btn = tabbar.tabButton(i, QTabBar.RightSide) if tabbar.tabButton(i, QTabBar.RightSide) else tabbar.tabButton(i, QTabBar.LeftSide)
+            btn = (
+                tabbar.tabButton(i, QTabBar.ButtonPosition.RightSide)
+                if tabbar.tabButton(i, QTabBar.ButtonPosition.RightSide)
+                else tabbar.tabButton(i, QTabBar.ButtonPosition.LeftSide)
+            )
             btn.resize(0, 0)
             btn.hide()
 
         # Creates layout for message bar
         self.layout = QGridLayout(self.info)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        spacerItem = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacerItem = QSpacerItem(
+            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+        )
         self.layout.addItem(spacerItem, 1, 0, 1, 1)
         # init messageBar instance
         self.infoBar = QgsMessageBar(self.info)
-        sizePolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         self.infoBar.setSizePolicy(sizePolicy)
         self.layout.addWidget(self.infoBar, 0, 0, 1, 1)
 
         # create database tree
         self.dock = QDockWidget(self.tr("Providers"), self)
         self.dock.setObjectName("DB_Manager_DBView")
-        self.dock.setFeatures(QDockWidget.DockWidgetMovable)
+        self.dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.tree = DBTree(self)
         self.dock.setWidget(self.tree)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.dock)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dock)
 
         # create status bar
         self.statusBar = QStatusBar(self)
@@ -441,12 +484,28 @@ class DBManager(QMainWindow):
         sep.setObjectName("DB_Manager_DbMenu_placeholder")
         sep.setVisible(False)
 
-        self.actionRefresh = self.menuDb.addAction(QgsApplication.getThemeIcon("/mActionRefresh.svg"), self.tr("&Refresh"),
-                                                   self.refreshActionSlot, QKeySequence("F5"))
-        self.actionSqlWindow = self.menuDb.addAction(QIcon(":/db_manager/actions/sql_window"), self.tr("&SQL Window"),
-                                                     self.runSqlWindow, QKeySequence("F2"))
+        self.actionRefresh = QAction(
+            QgsApplication.getThemeIcon("/mActionRefresh.svg"),
+            self.tr("&Refresh"),
+            self.menuDb,
+        )
+        self.actionRefresh.triggered.connect(self.refreshActionSlot)
+        self.actionRefresh.setShortcut(QKeySequence("F5"))
+        self.menuDb.addAction(self.actionRefresh)
+
+        self.actionSqlWindow = QAction(
+            GuiUtils.get_icon("mActionSQLWindow"), self.tr("&SQL Window"), self.menuDb
+        )
+        self.actionSqlWindow.triggered.connect(self.runSqlWindow)
+        self.actionSqlWindow.setShortcut(QKeySequence("F2"))
+        self.menuDb.addAction(self.actionSqlWindow)
+
         self.menuDb.addSeparator()
-        self.actionClose = self.menuDb.addAction(QIcon(), self.tr("&Exit"), self.close, QKeySequence("CTRL+Q"))
+
+        self.actionClose = QAction(QIcon(), self.tr("&Exit"), self.menuDb)
+        self.actionClose.triggered.connect(self.close)
+        self.actionClose.setShortcut(QKeySequence("CTRL+Q"))
+        self.menuDb.addAction(self.actionClose)
 
         # menu SCHEMA
         sep = self.menuSchema.addSeparator()
@@ -460,16 +519,20 @@ class DBManager(QMainWindow):
         sep.setObjectName("DB_Manager_TableMenu_placeholder")
         sep.setVisible(False)
 
-        self.actionImport = self.menuTable.addAction(QIcon(":/db_manager/actions/import"),
-                                                     QApplication.translate("DBManager", "&Import Layer/File…"),
-                                                     self.importActionSlot)
-        self.actionExport = self.menuTable.addAction(QIcon(":/db_manager/actions/export"),
-                                                     QApplication.translate("DBManager", "&Export to File…"),
-                                                     self.exportActionSlot)
+        self.actionImport = self.menuTable.addAction(
+            GuiUtils.get_icon("mActionDBImport"),
+            QApplication.translate("DBManager", "&Import Layer/File…"),
+            self.importActionSlot,
+        )
+        self.actionExport = self.menuTable.addAction(
+            GuiUtils.get_icon("mActionDBExport"),
+            QApplication.translate("DBManager", "&Export to File…"),
+            self.exportActionSlot,
+        )
         self.menuTable.addSeparator()
-        #self.actionShowSystemTables = self.menuTable.addAction(self.tr("Show system tables/views"), self.showSystemTables)
-        #self.actionShowSystemTables.setCheckable(True)
-        #self.actionShowSystemTables.setChecked(True)
+        # self.actionShowSystemTables = self.menuTable.addAction(self.tr("Show system tables/views"), self.showSystemTables)
+        # self.actionShowSystemTables.setCheckable(True)
+        # self.actionShowSystemTables.setChecked(True)
         actionMenuTable.setVisible(False)
 
         # add actions to the toolbar

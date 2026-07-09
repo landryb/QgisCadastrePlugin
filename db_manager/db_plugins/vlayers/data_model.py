@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : Virtual layers plugin for DB Manager
@@ -19,25 +17,27 @@ email                : hugo dot mercier at oslandia dot com
  ***************************************************************************/
 """
 
-from ..data_model import (TableDataModel,
-                          BaseTableModel,
-                          SqlResultModelAsync,
-                          SqlResultModelTask)
+from qgis.core import (
+    QgsTask,
+    QgsVectorLayer,
+    QgsVirtualLayerDefinition,
+    QgsVirtualLayerTask,
+    QgsWkbTypes,
+)
+from qgis.PyQt.QtCore import QElapsedTimer, QTemporaryFile
 
+from ..data_model import (
+    BaseTableModel,
+    SqlResultModelAsync,
+    SqlResultModelTask,
+    TableDataModel,
+)
+from ..plugin import BaseError, DbError
 from .connector import VLayerRegistry, getQueryGeometryName
 from .plugin import LVectorTable
-from ..plugin import DbError, BaseError
-
-from qgis.PyQt.QtCore import QTime, QTemporaryFile
-from qgis.core import (QgsVectorLayer,
-                       QgsWkbTypes,
-                       QgsVirtualLayerDefinition,
-                       QgsVirtualLayerTask,
-                       QgsTask)
 
 
 class LTableDataModel(TableDataModel):
-
     def __init__(self, table, parent=None):
         TableDataModel.__init__(self, table, parent)
 
@@ -58,7 +58,7 @@ class LTableDataModel(TableDataModel):
             if f.hasGeometry():
                 a.append(QgsWkbTypes.displayString(f.geometry().wkbType()))
             else:
-                a.append('None')
+                a.append("None")
             self.resdata.append(a)
 
         self.fetchedFrom = 0
@@ -71,7 +71,6 @@ class LTableDataModel(TableDataModel):
 
 
 class LSqlResultModelTask(SqlResultModelTask):
-
     def __init__(self, db, sql, parent):
         super().__init__(db, sql, parent)
 
@@ -85,7 +84,9 @@ class LSqlResultModelTask(SqlResultModelTask):
         df.setQuery(sql)
 
         self.subtask = QgsVirtualLayerTask(df)
-        self.addSubTask(self.subtask, [], QgsTask.ParentDependsOnSubTask)
+        self.addSubTask(
+            self.subtask, [], QgsTask.SubTaskDependency.ParentDependsOnSubTask
+        )
 
     def run(self):
         try:
@@ -102,7 +103,6 @@ class LSqlResultModelTask(SqlResultModelTask):
 
 
 class LSqlResultModelAsync(SqlResultModelAsync):
-
     def __init__(self, db, sql, parent=None):
         super().__init__()
 
@@ -119,9 +119,8 @@ class LSqlResultModelAsync(SqlResultModelAsync):
 
 
 class LSqlResultModel(BaseTableModel):
-
     def __init__(self, db, sql, parent=None, layer=None, path=None):
-        t = QTime()
+        t = QElapsedTimer()
         t.start()
 
         if not layer:
@@ -144,7 +143,7 @@ class LSqlResultModel(BaseTableModel):
         else:
             header = [f.name() for f in layer.fields()]
             has_geometry = False
-            if layer.geometryType() != QgsWkbTypes.NullGeometry:
+            if layer.geometryType() != QgsWkbTypes.GeometryType.NullGeometry:
                 gn = getQueryGeometryName(path)
                 if gn:
                     has_geometry = True

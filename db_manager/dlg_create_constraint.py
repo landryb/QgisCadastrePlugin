@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -22,19 +20,19 @@ The content of this file is based on
  ***************************************************************************/
 """
 
+from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QDialog, QApplication
+from qgis.PyQt.QtWidgets import QApplication, QDialog
 from qgis.utils import OverrideCursor
 
-from .db_plugins.plugin import DbError
+from .db_plugins.plugin import DbError, TableConstraint
 from .dlg_db_error import DlgDbError
-from .db_plugins.plugin import TableConstraint
+from .gui_utils import GuiUtils
 
-from .ui.ui_DlgCreateConstraint import Ui_DbManagerDlgCreateConstraint as Ui_Dialog
+Ui_Dialog, _ = uic.loadUiType(GuiUtils.get_ui_file_path("DlgCreateConstraint.ui"))
 
 
 class DlgCreateConstraint(QDialog, Ui_Dialog):
-
     def __init__(self, parent=None, table=None, db=None):
         QDialog.__init__(self, parent)
         self.table = table
@@ -53,7 +51,7 @@ class DlgCreateConstraint(QDialog, Ui_Dialog):
         constr = self.getConstraint()
 
         # now create the constraint
-        with OverrideCursor(Qt.WaitCursor):
+        with OverrideCursor(Qt.CursorShape.WaitCursor):
             try:
                 self.table.addConstraint(constr)
             except DbError as e:
@@ -64,8 +62,12 @@ class DlgCreateConstraint(QDialog, Ui_Dialog):
 
     def getConstraint(self):
         constr = TableConstraint(self.table)
-        constr.name = u""
-        constr.type = TableConstraint.TypePrimaryKey if self.radPrimaryKey.isChecked() else TableConstraint.TypeUnique
+        constr.name = ""
+        constr.type = (
+            TableConstraint.TypePrimaryKey
+            if self.radPrimaryKey.isChecked()
+            else TableConstraint.TypeUnique
+        )
         constr.columns = []
         column = self.cboColumn.currentText()
         for fld in self.table.fields():

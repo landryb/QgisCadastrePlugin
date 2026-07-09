@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -19,17 +17,16 @@ email                : brush.tyler@gmail.com
  *                                                                         *
  ***************************************************************************/
 """
-from builtins import str
-from builtins import object
 
 from qgis.core import QgsDataSourceUri
 
-from .plugin import DbError, ConnectionError
+from .plugin import ConnectionError, DbError
 
 
-class DBConnector(object):
-
+class DBConnector:
     def __init__(self, uri):
+        """Creates a new DB connector"""
+
         self.connection = None
         self._uri = uri
 
@@ -96,17 +93,22 @@ class DBConnector(object):
         return cursor
 
     def _execute_and_commit(self, sql):
-        """ tries to execute and commit some action, on error it rolls back the change """
+        """tries to execute and commit some action, on error it rolls back the change"""
         self._execute(None, sql)
         self._commit()
 
     def _get_cursor(self, name=None):
         try:
             if name is not None:
-                name = str(name).encode('ascii', 'replace').replace('?', "_")
-                self._last_cursor_named_id = 0 if not hasattr(self,
-                                                              '_last_cursor_named_id') else self._last_cursor_named_id + 1
-                return self.connection.cursor("%s_%d" % (name, self._last_cursor_named_id))
+                name = str(name).encode("ascii", "replace").replace("?", "_")
+                self._last_cursor_named_id = (
+                    0
+                    if not hasattr(self, "_last_cursor_named_id")
+                    else self._last_cursor_named_id + 1
+                )
+                return self.connection.cursor(
+                    "%s_%d" % (name, self._last_cursor_named_id)
+                )
 
             return self.connection.cursor()
 
@@ -184,38 +186,33 @@ class DBConnector(object):
 
     @classmethod
     def quoteId(self, identifier):
-        if hasattr(identifier, '__iter__') and not isinstance(identifier, str):
-            ids = list()
-            for i in identifier:
-                if i is None or i == "":
-                    continue
-                ids.append(self.quoteId(i))
-            return u'.'.join(ids)
+        if hasattr(identifier, "__iter__") and not isinstance(identifier, str):
+            return ".".join(
+                self.quoteId(i) for i in identifier if i is not None and i != ""
+            )
 
-        identifier = str(
-            identifier) if identifier is not None else str()  # make sure it's python unicode string
-        return u'"%s"' % identifier.replace('"', '""')
+        identifier = (
+            str(identifier) if identifier is not None else ""
+        )  # make sure it's python unicode string
+        return '"%s"' % identifier.replace('"', '""')
 
     @classmethod
     def quoteString(self, txt):
-        """ make the string safe - replace ' with '' """
-        if hasattr(txt, '__iter__') and not isinstance(txt, str):
-            txts = list()
-            for i in txt:
-                if i is None:
-                    continue
-                txts.append(self.quoteString(i))
-            return u'.'.join(txts)
+        """make the string safe - replace ' with ''"""
+        if hasattr(txt, "__iter__") and not isinstance(txt, str):
+            return ".".join(self.quoteString(i) for i in txt if i is not None)
 
-        txt = str(txt) if txt is not None else str()  # make sure it's python unicode string
-        return u"'%s'" % txt.replace("'", "''")
+        txt = (
+            str(txt) if txt is not None else ""
+        )  # make sure it's python unicode string
+        return "'%s'" % txt.replace("'", "''")
 
     @classmethod
     def getSchemaTableName(self, table):
-        if not hasattr(table, '__iter__') and not isinstance(table, str):
+        if not hasattr(table, "__iter__") and not isinstance(table, str):
             return (None, table)
         if isinstance(table, str):
-            table = table.split('.')
+            table = table.split(".")
         if len(table) < 2:
             return (None, table[0])
         else:
@@ -223,7 +220,7 @@ class DBConnector(object):
 
     @classmethod
     def getSqlDictionary(self):
-        """ return a generic SQL dictionary """
+        """return a generic SQL dictionary"""
         try:
             from ..sql_dictionary import getSqlDictionary
 
@@ -231,5 +228,14 @@ class DBConnector(object):
         except ImportError:
             return []
 
+    def getComment(self, tablename, field):
+        """Returns the comment for a field"""
+        return ""
+
+    def commentTable(self, schema, tablename, comment=None):
+        """Comment the table"""
+        pass
+
     def getQueryBuilderDictionary(self):
+
         return {}

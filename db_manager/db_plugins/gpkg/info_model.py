@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -22,18 +20,20 @@ email                : brush.tyler@gmail.com
 
 from qgis.PyQt.QtWidgets import QApplication
 
-from ..info_model import DatabaseInfo
 from ..html_elems import HtmlTable
+from ..info_model import DatabaseInfo
 
 
 class GPKGDatabaseInfo(DatabaseInfo):
-
     def __init__(self, db):
         self.db = db
 
     def connectionDetails(self):
         tbl = [
-            (QApplication.translate("DBManagerPlugin", "Filename:"), self.db.connector.dbname)
+            (
+                QApplication.translate("DBManagerPlugin", "Filename:"),
+                self.db.connector.dbname,
+            )
         ]
         return HtmlTable(tbl)
 

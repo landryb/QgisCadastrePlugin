@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -21,15 +19,17 @@ email                : brush.tyler@gmail.com
 """
 
 from qgis.core import QgsMessageLog
+
+from ..data_model import (
+    SqlResultModel,
+    SqlResultModelAsync,
+    SqlResultModelTask,
+    TableDataModel,
+)
 from ..plugin import BaseError
-from ..data_model import (TableDataModel,
-                          SqlResultModel,
-                          SqlResultModelAsync,
-                          SqlResultModelTask)
 
 
 class PGTableDataModel(TableDataModel):
-
     def __init__(self, table, parent=None):
         self.cursor = None
         TableDataModel.__init__(self, table, parent)
@@ -43,22 +43,26 @@ class PGTableDataModel(TableDataModel):
         self._createCursor()
 
     def _createCursor(self):
-        fields_txt = u", ".join(self.fields)
+        fields_txt = ", ".join(self.fields)
         table_txt = self.db.quoteId((self.table.schemaName(), self.table.name))
 
         self.cursor = self.db._get_cursor()
-        sql = u"SELECT %s FROM %s" % (fields_txt, table_txt)
+        sql = f"SELECT {fields_txt} FROM {table_txt}"
         self.db._execute(self.cursor, sql)
 
     def _sanitizeTableField(self, field):
         # get fields, ignore geometry columns
         if field.dataType.lower() == "geometry":
-            return u"CASE WHEN %(fld)s IS NULL THEN NULL ELSE GeometryType(%(fld)s) END AS %(fld)s" % {
-                'fld': self.db.quoteId(field.name)}
+            return "CASE WHEN {fld} IS NULL THEN NULL ELSE GeometryType({fld}) END AS {fld}".format(
+                fld=self.db.quoteId(field.name)
+            )
         elif field.dataType.lower() == "raster":
-            return u"CASE WHEN %(fld)s IS NULL THEN NULL ELSE 'RASTER' END AS %(fld)s" % {
-                'fld': self.db.quoteId(field.name)}
-        return u"%s::text" % self.db.quoteId(field.name)
+            return (
+                "CASE WHEN {fld} IS NULL THEN NULL ELSE 'RASTER' END AS {fld}".format(
+                    fld=self.db.quoteId(field.name)
+                )
+            )
+        return "%s::text" % self.db.quoteId(field.name)
 
     def _deleteCursor(self):
         self.db._close_cursor(self.cursor)
@@ -74,7 +78,7 @@ class PGTableDataModel(TableDataModel):
             self._createCursor()
 
         try:
-            self.cursor.scroll(row_start, mode='absolute')
+            self.cursor.scroll(row_start, mode="absolute")
         except self.db.error_types():
             self._deleteCursor()
             return self.fetchMoreData(row_start)
@@ -84,7 +88,6 @@ class PGTableDataModel(TableDataModel):
 
 
 class PGSqlResultModelTask(SqlResultModelTask):
-
     def __init__(self, db, sql, parent):
         super().__init__(db, sql, parent)
 
@@ -103,7 +106,6 @@ class PGSqlResultModelTask(SqlResultModelTask):
 
 
 class PGSqlResultModelAsync(SqlResultModelAsync):
-
     def __init__(self, db, sql, parent):
         super().__init__()
 

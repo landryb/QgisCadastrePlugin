@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -20,23 +18,24 @@ email                : hugo dot mercier at oslandia dot com
 
 Query builder dialog, based on the QSpatialite plugin (GPLv2+) by Romain Riviere
 """
-from builtins import str
 
-from qgis.PyQt.QtCore import Qt, QObject, QEvent
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QEvent, QObject, Qt
 from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QTextEdit
 
-from .ui.ui_DlgQueryBuilder import Ui_DbManagerQueryBuilderDlg as Ui_Dialog
 from .db_plugins.plugin import VectorTable
+from .gui_utils import GuiUtils
+
+Ui_Dialog, _ = uic.loadUiType(GuiUtils.get_ui_file_path("DlgQueryBuilder.ui"))
 
 
 class FocusEventFilter(QObject):
-
     def __init__(self, parent):
         QObject.__init__(self, parent)
-        self.focus = ''
+        self.focus = ""
 
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.FocusIn:
+        if event.type() == QEvent.Type.FocusIn:
             self.focus = obj.objectName()
         return QObject.eventFilter(self, obj, event)
 
@@ -56,7 +55,6 @@ def insertWithSelectionOn(parent, objectname, text):
 
 
 class QueryBuilderDlg(QDialog):
-
     # object used to store parameters between invocations
     saveParameter = None
 
@@ -64,7 +62,7 @@ class QueryBuilderDlg(QDialog):
         QDialog.__init__(self, parent)
         self.iface = iface
         self.db = db
-        self.query = ''
+        self.query = ""
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.ui.group.setMaximumHeight(self.ui.tab.sizeHint().height())
@@ -77,19 +75,19 @@ class QueryBuilderDlg(QDialog):
         self.ui.order.installEventFilter(self.evt)
 
         d = self.db.connector.getQueryBuilderDictionary()
-        #Application default parameters
+        # Application default parameters
         self.table = None
         self.col_col = []
         self.col_where = []
         self.coltables = []
         self.ui.extract.setChecked(True)
-        #ComboBox default values
-        self.ui.functions.insertItems(1, d['function'])
-        self.ui.math.insertItems(1, d['math'])
-        self.ui.aggregates.insertItems(1, d['aggregate'])
-        self.ui.operators.insertItems(1, d['operator'])
-        self.ui.stringfct.insertItems(1, d['string'])
-        #self.ui.Rtree.insertItems(1,rtreecommand)
+        # ComboBox default values
+        self.ui.functions.insertItems(1, d["function"])
+        self.ui.math.insertItems(1, d["math"])
+        self.ui.aggregates.insertItems(1, d["aggregate"])
+        self.ui.operators.insertItems(1, d["operator"])
+        self.ui.stringfct.insertItems(1, d["string"])
+        # self.ui.Rtree.insertItems(1,rtreecommand)
 
         # restore last query if needed
         if reset:
@@ -97,10 +95,10 @@ class QueryBuilderDlg(QDialog):
         if QueryBuilderDlg.saveParameter is not None:
             self.restoreLastQuery()
 
-        #Show Tables
+        # Show Tables
         self.show_tables()
 
-        #Signal/slot
+        # Signal/slot
         self.ui.aggregates.currentIndexChanged.connect(self.add_aggregate)
         self.ui.stringfct.currentIndexChanged.connect(self.add_stringfct)
         self.ui.operators.currentIndexChanged.connect(self.add_operators)
@@ -117,11 +115,19 @@ class QueryBuilderDlg(QDialog):
         self.ui.checkBox.stateChanged.connect(self.show_tables)
 
         if self.db.explicitSpatialIndex():
-            self.tablesGeo = [table for table in self.tables if isinstance(table, VectorTable)]
-            tablesGeo = ['"%s"."%s"' % (table.name, table.geomColumn) for table in self.tablesGeo]
+            self.tablesGeo = [
+                table for table in self.tables if isinstance(table, VectorTable)
+            ]
+            tablesGeo = [
+                f'"{table.name}"."{table.geomColumn}"' for table in self.tablesGeo
+            ]
             self.ui.table_target.insertItems(1, tablesGeo)
-            self.idxTables = [table for table in self.tablesGeo if table.hasSpatialIndex()]
-            idxTables = ['"%s"."%s"' % (table.name, table.geomColumn) for table in self.idxTables]
+            self.idxTables = [
+                table for table in self.tablesGeo if table.hasSpatialIndex()
+            ]
+            idxTables = [
+                f'"{table.name}"."{table.geomColumn}"' for table in self.idxTables
+            ]
             self.ui.table_idx.insertItems(1, idxTables)
 
             self.ui.usertree.clicked.connect(self.use_rtree)
@@ -195,21 +201,26 @@ class QueryBuilderDlg(QDialog):
         if self.ui.tables.currentIndex() <= 0:
             return
         ag = self.ui.tables.currentText()
-        #Retrieve Table Object from txt
+        # Retrieve Table Object from txt
         tableObj = [table for table in self.tables if table.name.upper() == ag.upper()]
         if len(tableObj) != 1:
             return  # No object with this name
         self.table = tableObj[0]
-        if (ag in self.coltables):  # table already use
-            response = QMessageBox.question(self, "Table already used", "Do you want to add table %s again?" % ag, QMessageBox.Yes | QMessageBox.No)
-            if response == QMessageBox.No:
+        if ag in self.coltables:  # table already use
+            response = QMessageBox.question(
+                self,
+                "Table already used",
+                "Do you want to add table %s again?" % ag,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if response == QMessageBox.StandardButton.No:
                 return
         ag = self.table.quotedName()
         txt = self.ui.tab.text()
         if (txt is None) or (txt in ("", " ")):
-            self.ui.tab.setText('%s' % ag)
+            self.ui.tab.setText("%s" % ag)
         else:
-            self.ui.tab.setText('%s, %s' % (txt, ag))
+            self.ui.tab.setText(f"{txt}, {ag}")
         self.ui.tables.setCurrentIndex(0)
 
     def add_columns(self):
@@ -218,16 +229,26 @@ class QueryBuilderDlg(QDialog):
         ag = self.ui.columns.currentText()
         if self.evt.focus == "where":  # in where section
             if ag in self.col_where:  # column already called in where section
-                response = QMessageBox.question(self, "Column already used in WHERE clause", "Do you want to add column %s again?" % ag, QMessageBox.Yes | QMessageBox.No)
-                if response == QMessageBox.No:
+                response = QMessageBox.question(
+                    self,
+                    "Column already used in WHERE clause",
+                    "Do you want to add column %s again?" % ag,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+                if response == QMessageBox.StandardButton.No:
                     self.ui.columns.setCurrentIndex(0)
                     return
             self.ui.where.insertPlainText(ag)
             self.col_where.append(ag)
         elif self.evt.focus == "col":
             if ag in self.col_col:  # column already called in col section
-                response = QMessageBox.question(self, "Column already used in COLUMNS section", "Do you want to add column %s again?" % ag, QMessageBox.Yes | QMessageBox.No)
-                if response == QMessageBox.No:
+                response = QMessageBox.question(
+                    self,
+                    "Column already used in COLUMNS section",
+                    "Do you want to add column %s again?" % ag,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+                if response == QMessageBox.StandardButton.No:
                     self.ui.columns.setCurrentIndex(0)
                     return
             if len(self.ui.col.toPlainText().strip()) > 0:
@@ -250,13 +271,13 @@ class QueryBuilderDlg(QDialog):
 
     def list_cols(self):
         table = self.table
-        if (table is None):
+        if table is None:
             return
-        if (table.name in self.coltables):
+        if table.name in self.coltables:
             return
 
-        columns = ['"%s"."%s"' % (table.name, col.name) for col in table.fields()]
-        #add special '*' column:
+        columns = [f'"{table.name}"."{col.name}"' for col in table.fields()]
+        # add special '*' column:
         columns = ['"%s".*' % table.name] + columns
         self.coltables.append(table.name)  # table columns have been listed
         # first and second col combobox
@@ -271,14 +292,16 @@ class QueryBuilderDlg(QDialog):
         if self.ui.columns_2.currentIndex() <= 0:
             return
         item = self.ui.columns_2.currentText()
-        #recover column and table:
+        # recover column and table:
         column = item.split(".")  # "table".'column'
         table = column[0]
-        if column[1] == '*':
+        if column[1] == "*":
             return
         table = table[1:-1]
 
-        qtable = [t for t in self.tables if t.name.lower() == table.lower()][0].quotedName()
+        qtable = [t for t in self.tables if t.name.lower() == table.lower()][
+            0
+        ].quotedName()
 
         if self.ui.extract.isChecked():
             limit = 10
@@ -288,17 +311,17 @@ class QueryBuilderDlg(QDialog):
         self.ui.values.setModel(model)
 
     def query_item(self, index):
-        value = index.data(Qt.EditRole)
+        value = index.data(Qt.ItemDataRole.EditRole)
 
         if value is None:
-            queryWord = u'NULL'
+            queryWord = "NULL"
         elif isinstance(value, (int, float)):
             queryWord = str(value)
         else:
             queryWord = self.db.connector.quoteString(value)
 
-        if queryWord.strip() != '':
-            self.ui.where.insertPlainText(u' ' + queryWord)
+        if queryWord.strip() != "":
+            self.ui.where.insertPlainText(" " + queryWord)
             self.ui.where.setFocus()
 
     def use_rtree(self):
@@ -309,12 +332,17 @@ class QueryBuilderDlg(QDialog):
             tab_idx = idx.split(".")[0][1:-1]  # remove "
             col_idx = idx.split(".")[1][1:-1]  # remove '
         except:
-            QMessageBox.warning(self, "Use R-Tree", "All fields are necessary", QMessageBox.Cancel)
+            QMessageBox.warning(
+                self,
+                "Use R-Tree",
+                "All fields are necessary",
+                QMessageBox.StandardButton.Cancel,
+            )
         tgt = self.ui.table_target.currentText()
         if tgt in (None, "", " ", "Table (Target)"):
             return
-        tgt_tab = tgt.split('.')[0][1:-1]
-        tgt_col = tgt.split('.')[1][1:-1]
+        tgt_tab = tgt.split(".")[0][1:-1]
+        tgt_col = tgt.split(".")[1][1:-1]
         sql = ""
         if self.ui.where.toPlainText() not in (None, "", " "):
             sql += "\nAND"
@@ -322,7 +350,7 @@ class QueryBuilderDlg(QDialog):
         self.ui.where.insertPlainText(sql)
 
     def reset(self):
-        #reset lists:
+        # reset lists:
         self.ui.values.setModel(None)
         self.ui.columns_2.clear()
         self.ui.columns.insertItems(0, ["Columns"])
@@ -338,27 +366,29 @@ class QueryBuilderDlg(QDialog):
         query_group = str(self.ui.group.toPlainText())
         query_order = str(self.ui.order.toPlainText())
         query = ""
-        if query_col.strip() != '':
-            query += "SELECT %s \nFROM %s" % (query_col, query_table)
-        if query_where.strip() != '':
+        if query_col.strip() != "":
+            query += f"SELECT {query_col} \nFROM {query_table}"
+        if query_where.strip() != "":
             query += "\nWHERE %s" % query_where
-        if query_group.strip() != '':
+        if query_group.strip() != "":
             query += "\nGROUP BY %s" % query_group
-        if query_order.strip() != '':
+        if query_order.strip() != "":
             query += "\nORDER BY %s" % query_order
-        if query == '':
+        if query == "":
             return
         self.query = query
 
-        saveParameter = {}
-        saveParameter["coltables"] = self.coltables
-        saveParameter["col_col"] = self.col_col
-        saveParameter["col_where"] = self.col_where
-        saveParameter["col"] = query_col
-        saveParameter["tab"] = query_table
-        saveParameter["where"] = query_where
-        saveParameter["group"] = query_group
-        saveParameter["order"] = query_order
+        saveParameter = {
+            "coltables": self.coltables,
+            "col_col": self.col_col,
+            "col_where": self.col_where,
+            "col": query_col,
+            "tab": query_table,
+            "where": query_where,
+            "group": query_group,
+            "order": query_order,
+        }
+
         QueryBuilderDlg.saveParameter = saveParameter
 
     def restoreLastQuery(self):
@@ -373,14 +403,18 @@ class QueryBuilderDlg(QDialog):
         self.ui.where.insertPlainText(saveParameter["where"])
         self.ui.order.setPlainText(saveParameter["order"])
         self.ui.group.setPlainText(saveParameter["group"])
-        #list previous colist:
+        # list previous colist:
         for tablename in self.coltables:
-            #Retrieve table object from table name:
-            table = [table for table in self.tables if table.name.upper() == tablename.upper()]
+            # Retrieve table object from table name:
+            table = [
+                table
+                for table in self.tables
+                if table.name.upper() == tablename.upper()
+            ]
             if len(table) != 1:
                 break
             table = table[0]
-            columns = ['"%s"."%s"' % (table.name, col.name) for col in table.fields()]
+            columns = [f'"{table.name}"."{col.name}"' for col in table.fields()]
             # first and second col combobox
             end = self.ui.columns.count()
             self.ui.columns.insertItems(end, columns)

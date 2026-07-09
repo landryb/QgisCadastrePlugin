@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : Virtual layers plugin for DB Manager
@@ -21,25 +19,21 @@ email                : hugo dot mercier at oslandia dot com
 
 from qgis.PyQt.QtWidgets import QApplication
 
-from ..info_model import DatabaseInfo
 from ..html_elems import HtmlTable
+from ..info_model import DatabaseInfo
 
 
 class LDatabaseInfo(DatabaseInfo):
-
     def __init__(self, db):
         self.db = db
 
     def connectionDetails(self):
-        tbl = [
-        ]
+        tbl = []
         return HtmlTable(tbl)
 
     def generalInfo(self):
         self.db.connector.getInfo()
-        tbl = [
-            (QApplication.translate("DBManagerPlugin", "SQLite version:"), "3")
-        ]
+        tbl = [(QApplication.translate("DBManagerPlugin", "SQLite version:"), "3")]
         return HtmlTable(tbl)
 
     def privilegesDetails(self):

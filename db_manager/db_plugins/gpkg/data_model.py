@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -22,24 +20,25 @@ email                : brush.tyler@gmail.com
 
 from qgis.core import QgsMessageLog
 
-from ..data_model import (TableDataModel,
-                          SqlResultModel,
-                          SqlResultModelAsync,
-                          SqlResultModelTask)
+from ..data_model import (
+    SqlResultModel,
+    SqlResultModelAsync,
+    SqlResultModelTask,
+    TableDataModel,
+)
 from ..plugin import BaseError
 
 
 class GPKGTableDataModel(TableDataModel):
-
     def __init__(self, table, parent=None):
         TableDataModel.__init__(self, table, parent)
 
-        #fields_txt = u", ".join(self.fields)
-        #table_txt = self.db.quoteId((self.table.schemaName(), self.table.name))
+        # fields_txt = ", ".join(self.fields)
+        # table_txt = self.db.quoteId((self.table.schemaName(), self.table.name))
 
         # run query and get results
-        #sql = u"SELECT %s FROM %s" % (fields_txt, table_txt)
-        #self.resdata = self.db._fetchAll(sql, include_fid_and_geometry = True)
+        # sql = "SELECT %s FROM %s" % (fields_txt, table_txt)
+        # self.resdata = self.db._fetchAll(sql, include_fid_and_geometry = True)
 
         self.resdata = self.db._fetchAllFromLayer(table)
 
@@ -54,7 +53,6 @@ class GPKGTableDataModel(TableDataModel):
 
 
 class GPKGSqlResultModelTask(SqlResultModelTask):
-
     def __init__(self, db, sql, parent):
         super().__init__(db, sql, parent)
 
@@ -73,7 +71,6 @@ class GPKGSqlResultModelTask(SqlResultModelTask):
 
 
 class GPKGSqlResultModelAsync(SqlResultModelAsync):
-
     def __init__(self, db, sql, parent):
         super().__init__()
 

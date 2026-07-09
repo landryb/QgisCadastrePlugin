@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -21,9 +19,8 @@ email                : brush.tyler@gmail.com
 """
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QTableView, QAbstractItemView, QApplication, QAction
-from qgis.PyQt.QtGui import QKeySequence, QCursor, QClipboard
-
+from qgis.PyQt.QtGui import QClipboard, QCursor, QKeySequence
+from qgis.PyQt.QtWidgets import QAbstractItemView, QAction, QApplication, QTableView
 from qgis.utils import OverrideCursor
 
 from .db_plugins.plugin import DbError, Table
@@ -31,11 +28,10 @@ from .dlg_db_error import DlgDbError
 
 
 class TableViewer(QTableView):
-
     def __init__(self, parent=None):
         QTableView.__init__(self, parent)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
 
         self.item = None
         self.dirty = False
@@ -43,7 +39,7 @@ class TableViewer(QTableView):
         # allow copying results
         copyAction = QAction(QApplication.translate("DBManagerPlugin", "Copy"), self)
         self.addAction(copyAction)
-        copyAction.setShortcuts(QKeySequence.Copy)
+        copyAction.setShortcuts(QKeySequence.StandardKey.Copy)
         copyAction.triggered.connect(self.copySelectedResults)
 
         self._clear()
@@ -88,7 +84,7 @@ class TableViewer(QTableView):
             model.deleteLater()
 
     def _loadTableData(self, table):
-        with OverrideCursor(Qt.WaitCursor):
+        with OverrideCursor(Qt.CursorShape.WaitCursor):
             try:
                 # set the new model
                 self.setModel(table.tableDataModel(self))
@@ -107,5 +103,5 @@ class TableViewer(QTableView):
         for idx in self.selectionModel().selectedRows():
             text += "\n" + model.rowToString(idx.row(), "\t")
 
-        QApplication.clipboard().setText(text, QClipboard.Selection)
-        QApplication.clipboard().setText(text, QClipboard.Clipboard)
+        QApplication.clipboard().setText(text, QClipboard.Mode.Selection)
+        QApplication.clipboard().setText(text, QClipboard.Mode.Clipboard)

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -22,19 +20,28 @@ The content of this file is based on
  ***************************************************************************/
 """
 
+from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QApplication
+from qgis.PyQt.QtWidgets import QApplication, QDialog, QMessageBox
 from qgis.utils import OverrideCursor
 
 from .db_plugins.plugin import DbError
 from .dlg_db_error import DlgDbError
+from .gui_utils import GuiUtils
 
-from .ui.ui_DlgAddGeometryColumn import Ui_DbManagerDlgAddGeometryColumn as Ui_Dialog
+Ui_Dialog, _ = uic.loadUiType(GuiUtils.get_ui_file_path("DlgAddGeometryColumn.ui"))
 
 
 class DlgAddGeometryColumn(QDialog, Ui_Dialog):
-    GEOM_TYPES = ["POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON",
-                  "GEOMETRYCOLLECTION"]
+    GEOM_TYPES = [
+        "POINT",
+        "LINESTRING",
+        "POLYGON",
+        "MULTIPOINT",
+        "MULTILINESTRING",
+        "MULTIPOLYGON",
+        "GEOMETRYCOLLECTION",
+    ]
 
     def __init__(self, parent=None, table=None, db=None):
         QDialog.__init__(self, parent)
@@ -45,9 +52,11 @@ class DlgAddGeometryColumn(QDialog, Ui_Dialog):
         self.buttonBox.accepted.connect(self.createGeomColumn)
 
     def createGeomColumn(self):
-        """ first check whether everything's fine """
+        """first check whether everything's fine"""
         if self.editName.text() == "":
-            QMessageBox.critical(self, self.tr("DB Manager"), self.tr("Field name must not be empty."))
+            QMessageBox.critical(
+                self, self.tr("DB Manager"), self.tr("Field name must not be empty.")
+            )
             return
 
         name = self.editName.text()
@@ -60,9 +69,11 @@ class DlgAddGeometryColumn(QDialog, Ui_Dialog):
         createSpatialIndex = False
 
         # now create the geometry column
-        with OverrideCursor(Qt.WaitCursor):
+        with OverrideCursor(Qt.CursorShape.WaitCursor):
             try:
-                self.table.addGeometryColumn(name, geom_type, srid, dim, createSpatialIndex)
+                self.table.addGeometryColumn(
+                    name, geom_type, srid, dim, createSpatialIndex
+                )
             except DbError as e:
                 DlgDbError.showError(e, self)
                 return

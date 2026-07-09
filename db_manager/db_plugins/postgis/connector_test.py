@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     connector_test.py
@@ -17,16 +15,16 @@
 ***************************************************************************
 """
 
-__author__ = 'Sandro Santilli'
-__date__ = 'May 2017'
-__copyright__ = '(C) 2017, Sandro Santilli'
-# This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '$Format:%H$'
+__author__ = "Sandro Santilli"
+__date__ = "May 2017"
+__copyright__ = "(C) 2017, Sandro Santilli"
 
 import os
-import qgis
-from qgis.testing import start_app, unittest
+import unittest
+
 from qgis.core import QgsDataSourceUri
+from qgis.PyQt.QtCore import QObject
+from qgis.testing import QgisTestCase, start_app
 from qgis.utils import iface
 
 start_app()
@@ -34,9 +32,8 @@ start_app()
 from db_manager.db_plugins.postgis.connector import PostGisDBConnector
 
 
-class TestDBManagerPostgisConnector(unittest.TestCase):
-
-    #def setUpClass():
+class TestDBManagerPostgisConnector(QgisTestCase):
+    # def setUpClass():
 
     def _getUser(self, connector):
         r = connector._execute(None, "SELECT USER")
@@ -50,27 +47,31 @@ class TestDBManagerPostgisConnector(unittest.TestCase):
         connector._close_cursor(r)
         return val
 
-    # See https://issues.qgis.org/issues/16625
-    # and https://issues.qgis.org/issues/10600
+    # See https://github.com/qgis/QGIS/issues/24525
+    # and https://github.com/qgis/QGIS/issues/19005
     def test_dbnameLessURI(self):
-        c = PostGisDBConnector(QgsDataSourceUri())
+        obj = QObject()  # needs to be kept alive
+        obj.connectionName = lambda: "fake"
+        obj.providerName = lambda: "postgres"
+
+        c = PostGisDBConnector(QgsDataSourceUri(), obj)
         self.assertIsInstance(c, PostGisDBConnector)
         uri = c.uri()
 
         # No username was passed, so we expect it to be taken
         # from PGUSER or USER environment variables
-        expected_user = os.environ.get('PGUSER') or os.environ.get('USER')
+        expected_user = os.environ.get("PGUSER") or os.environ.get("USER")
         actual_user = self._getUser(c)
         self.assertEqual(actual_user, expected_user)
 
         # No database was passed, so we expect it to be taken
         # from PGDATABASE or expected user
-        expected_db = os.environ.get('PGDATABASE') or expected_user
+        expected_db = os.environ.get("PGDATABASE") or expected_user
         actual_db = self._getDatabase(c)
         self.assertEqual(actual_db, expected_db)
 
     # TODO: add service-only test (requires a ~/.pg_service.conf file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

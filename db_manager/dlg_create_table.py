@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -21,25 +19,30 @@ The content of this file is based on
  *                                                                         *
  ***************************************************************************/
 """
-from builtins import str
-from builtins import range
 
-from qgis.PyQt.QtCore import Qt, QModelIndex
-from qgis.PyQt.QtWidgets import QItemDelegate, QComboBox, QDialog, QPushButton, QDialogButtonBox, QMessageBox, QApplication
-from qgis.PyQt.QtCore import QItemSelectionModel, pyqtSignal
-
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QItemSelectionModel, QModelIndex, Qt, pyqtSignal
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QItemDelegate,
+    QMessageBox,
+    QPushButton,
+)
 from qgis.utils import OverrideCursor
 
 from .db_plugins.data_model import TableFieldsModel
-from .db_plugins.plugin import DbError, ConnectionError
+from .db_plugins.plugin import ConnectionError, DbError
 from .dlg_db_error import DlgDbError
+from .gui_utils import GuiUtils
 
-from .ui.ui_DlgCreateTable import Ui_DbManagerDlgCreateTable as Ui_Dialog
+Ui_Dialog, _ = uic.loadUiType(GuiUtils.get_ui_file_path("DlgCreateTable.ui"))
 
 
 class TableFieldsDelegate(QItemDelegate):
-
-    """ delegate with some special item editors """
+    """delegate with some special item editors"""
 
     columnNameChanged = pyqtSignal()
 
@@ -59,17 +62,17 @@ class TableFieldsDelegate(QItemDelegate):
         return QItemDelegate.createEditor(self, parent, option, index)
 
     def setEditorData(self, editor, index):
-        """ load data from model to editor """
+        """load data from model to editor"""
         m = index.model()
         if index.column() == 1:
-            txt = m.data(index, Qt.DisplayRole)
+            txt = m.data(index, Qt.ItemDataRole.DisplayRole)
             editor.setEditText(txt)
         else:
             # use default
             QItemDelegate.setEditorData(self, editor, index)
 
     def setModelData(self, editor, model, index):
-        """ save data from editor back to model """
+        """save data from editor back to model"""
         if index.column() == 1:
             model.setData(index, editor.currentText())
         else:
@@ -80,8 +83,15 @@ class TableFieldsDelegate(QItemDelegate):
 
 
 class DlgCreateTable(QDialog, Ui_Dialog):
-    GEOM_TYPES = ["POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON",
-                  "GEOMETRYCOLLECTION"]
+    GEOM_TYPES = [
+        "POINT",
+        "LINESTRING",
+        "POLYGON",
+        "MULTIPOINT",
+        "MULTILINESTRING",
+        "MULTIPOLYGON",
+        "GEOMETRYCOLLECTION",
+    ]
 
     def __init__(self, item, parent=None):
         QDialog.__init__(self, parent)
@@ -105,7 +115,7 @@ class DlgCreateTable(QDialog, Ui_Dialog):
         self.fields.setColumnWidth(2, 50)
 
         b = QPushButton(self.tr("&Create"))
-        self.buttonBox.addButton(b, QDialogButtonBox.ActionRole)
+        self.buttonBox.addButton(b, QDialogButtonBox.ButtonRole.ActionRole)
 
         self.btnAddField.clicked.connect(self.addField)
         self.btnDeleteField.clicked.connect(self.deleteField)
@@ -131,7 +141,7 @@ class DlgCreateTable(QDialog, Ui_Dialog):
         index = -1
         for schema in self.schemas:
             self.cboSchema.addItem(schema.name)
-            if hasattr(self.item, 'schema') and schema.name == self.item.schema().name:
+            if hasattr(self.item, "schema") and schema.name == self.item.schema().name:
                 index = self.cboSchema.count() - 1
         self.cboSchema.setCurrentIndex(index)
 
@@ -149,8 +159,8 @@ class DlgCreateTable(QDialog, Ui_Dialog):
     def updateUiFields(self):
         fld = self.selectedField()
         if fld is not None:
-            up_enabled = (fld != 0)
-            down_enabled = (fld != self.fields.model().rowCount() - 1)
+            up_enabled = fld != 0
+            down_enabled = fld != self.fields.model().rowCount() - 1
             del_enabled = True
         else:
             up_enabled, down_enabled, del_enabled = False, False, False
@@ -159,7 +169,7 @@ class DlgCreateTable(QDialog, Ui_Dialog):
         self.btnDeleteField.setEnabled(del_enabled)
 
     def updatePkeyCombo(self, selRow=None):
-        """ called when list of columns changes. if 'sel' is None, it keeps current index """
+        """called when list of columns changes. if 'sel' is None, it keeps current index"""
 
         if selRow is None:
             selRow = self.cboPrimaryKey.currentIndex()
@@ -174,7 +184,7 @@ class DlgCreateTable(QDialog, Ui_Dialog):
         self.cboPrimaryKey.setCurrentIndex(selRow)
 
     def addField(self):
-        """ add new field to the end of field table """
+        """Adds new field to the end of field table"""
         m = self.fields.model()
         newRow = m.rowCount()
         m.insertRows(newRow, 1)
@@ -190,12 +200,16 @@ class DlgCreateTable(QDialog, Ui_Dialog):
             if "serial" in self.fieldTypes:  # PostgreSQL
                 colType = "serial"
         m.setData(indexType, colType)
-        m.setData(indexNull, None, Qt.DisplayRole)
-        m.setData(indexNull, Qt.Unchecked, Qt.CheckStateRole)
+        m.setData(indexNull, None, Qt.ItemDataRole.DisplayRole)
+        m.setData(indexNull, Qt.CheckState.Unchecked, Qt.ItemDataRole.CheckStateRole)
 
         # selects the new row
         sel = self.fields.selectionModel()
-        sel.select(indexName, QItemSelectionModel.Rows | QItemSelectionModel.ClearAndSelect)
+        sel.select(
+            indexName,
+            QItemSelectionModel.SelectionFlag.Rows
+            | QItemSelectionModel.SelectionFlag.ClearAndSelect,
+        )
 
         # starts editing
         self.fields.edit(indexName)
@@ -209,23 +223,29 @@ class DlgCreateTable(QDialog, Ui_Dialog):
         return sel[0].row()
 
     def deleteField(self):
-        """ delete selected field """
+        """Deletes selected field"""
         row = self.selectedField()
         if row is None:
-            QMessageBox.information(self, self.tr("DB Manager"), self.tr("No field selected."))
+            QMessageBox.information(
+                self, self.tr("DB Manager"), self.tr("No field selected.")
+            )
         else:
             self.fields.model().removeRows(row, 1)
 
         self.updatePkeyCombo()
 
     def fieldUp(self):
-        """ move selected field up """
+        """move selected field up"""
         row = self.selectedField()
         if row is None:
-            QMessageBox.information(self, self.tr("DB Manager"), self.tr("No field selected."))
+            QMessageBox.information(
+                self, self.tr("DB Manager"), self.tr("No field selected.")
+            )
             return
         if row == 0:
-            QMessageBox.information(self, self.tr("DB Manager"), self.tr("Field is already at the top."))
+            QMessageBox.information(
+                self, self.tr("DB Manager"), self.tr("Field is already at the top.")
+            )
             return
 
         # take row and reinsert it
@@ -234,18 +254,26 @@ class DlgCreateTable(QDialog, Ui_Dialog):
 
         # set selection again
         index = self.fields.model().index(row - 1, 0, QModelIndex())
-        self.fields.selectionModel().select(index, QItemSelectionModel.Rows | QItemSelectionModel.ClearAndSelect)
+        self.fields.selectionModel().select(
+            index,
+            QItemSelectionModel.SelectionFlag.Rows
+            | QItemSelectionModel.SelectionFlag.ClearAndSelect,
+        )
 
         self.updatePkeyCombo()
 
     def fieldDown(self):
-        """ move selected field down """
+        """move selected field down"""
         row = self.selectedField()
         if row is None:
-            QMessageBox.information(self, self.tr("DB Manager"), self.tr("No field selected."))
+            QMessageBox.information(
+                self, self.tr("DB Manager"), self.tr("No field selected.")
+            )
             return
         if row == self.fields.model().rowCount() - 1:
-            QMessageBox.information(self, self.tr("DB Manager"), self.tr("Field is already at the bottom."))
+            QMessageBox.information(
+                self, self.tr("DB Manager"), self.tr("Field is already at the bottom.")
+            )
             return
 
         # take row and reinsert it
@@ -254,35 +282,51 @@ class DlgCreateTable(QDialog, Ui_Dialog):
 
         # set selection again
         index = self.fields.model().index(row + 1, 0, QModelIndex())
-        self.fields.selectionModel().select(index, QItemSelectionModel.Rows | QItemSelectionModel.ClearAndSelect)
+        self.fields.selectionModel().select(
+            index,
+            QItemSelectionModel.SelectionFlag.Rows
+            | QItemSelectionModel.SelectionFlag.ClearAndSelect,
+        )
 
         self.updatePkeyCombo()
 
     def createTable(self):
-        """ create table with chosen fields, optionally add a geometry column """
+        """Creates table with chosen fields, optionally add a geometry column"""
         if not self.hasSchemas:
             schema = None
         else:
             schema = str(self.cboSchema.currentText())
             if len(schema) == 0:
-                QMessageBox.information(self, self.tr("DB Manager"), self.tr("A valid schema must be selected first."))
+                QMessageBox.information(
+                    self,
+                    self.tr("DB Manager"),
+                    self.tr("A valid schema must be selected first."),
+                )
                 return
 
         table = str(self.editName.text())
         if len(table) == 0:
-            QMessageBox.information(self, self.tr("DB Manager"), self.tr("A valid table name is required."))
+            QMessageBox.information(
+                self, self.tr("DB Manager"), self.tr("A valid table name is required.")
+            )
             return
 
         m = self.fields.model()
         if m.rowCount() == 0:
-            QMessageBox.information(self, self.tr("DB Manager"), self.tr("At least one field is required."))
+            QMessageBox.information(
+                self, self.tr("DB Manager"), self.tr("At least one field is required.")
+            )
             return
 
         useGeomColumn = self.chkGeomColumn.isChecked()
         if useGeomColumn:
             geomColumn = str(self.editGeomColumn.text())
             if len(geomColumn) == 0:
-                QMessageBox.information(self, self.tr("DB Manager"), self.tr("A name is required for the geometry column."))
+                QMessageBox.information(
+                    self,
+                    self.tr("DB Manager"),
+                    self.tr("A name is required for the geometry column."),
+                )
                 return
 
             geomType = self.GEOM_TYPES[self.cboGeomType.currentIndex()]
@@ -299,7 +343,7 @@ class DlgCreateTable(QDialog, Ui_Dialog):
             flds[pk_index].primaryKey = True
 
         # commit to DB
-        with OverrideCursor(Qt.WaitCursor):
+        with OverrideCursor(Qt.CursorShape.WaitCursor):
             try:
                 if not useGeomColumn:
                     self.db.createTable(table, flds, schema)
@@ -309,6 +353,21 @@ class DlgCreateTable(QDialog, Ui_Dialog):
 
             except (ConnectionError, DbError) as e:
                 DlgDbError.showError(e, self)
-            return
 
-        QMessageBox.information(self, self.tr("DB Manager"), self.tr("Table created successfully."))
+        # clear UI
+        self.editName.clear()
+        self.fields.model().removeRows(0, self.fields.model().rowCount())
+        self.cboPrimaryKey.clear()
+        self.chkGeomColumn.setChecked(False)
+        self.chkSpatialIndex.setChecked(False)
+        self.editGeomSrid.clear()
+
+        self.cboGeomType.setEnabled(False)
+        self.editGeomColumn.setEnabled(False)
+        self.spinGeomDim.setEnabled(False)
+        self.editGeomSrid.setEnabled(False)
+        self.chkSpatialIndex.setEnabled(False)
+
+        QMessageBox.information(
+            self, self.tr("DB Manager"), self.tr("Table created successfully.")
+        )

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : DB Manager
@@ -19,23 +17,20 @@ email                : brush.tyler@gmail.com
  *                                                                         *
  ***************************************************************************/
 """
-from builtins import str
-from builtins import object
 
 
-class HtmlContent(object):
-
+class HtmlContent:
     def __init__(self, data):
         self.data = data if not isinstance(data, HtmlContent) else data.data
 
     def toHtml(self):
         if isinstance(self.data, list) or isinstance(self.data, tuple):
-            html = u''
+            html = ""
             for item in self.data:
                 html += HtmlContent(item).toHtml()
             return html
 
-        if hasattr(self.data, 'toHtml'):
+        if hasattr(self.data, "toHtml"):
             return self.data.toHtml()
 
         html = str(self.data).replace("\n", "<br>")
@@ -50,21 +45,20 @@ class HtmlContent(object):
                     break
             return not empty
 
-        if hasattr(self.data, 'hasContents'):
+        if hasattr(self.data, "hasContents"):
             return self.data.hasContents()
 
         return len(self.data) > 0
 
 
-class HtmlElem(object):
-
+class HtmlElem:
     def __init__(self, tag, data, attrs=None):
         self.tag = tag
         self.data = data if isinstance(data, HtmlContent) else HtmlContent(data)
         self.attrs = attrs if attrs is not None else dict()
-        if 'tag' in self.attrs:
-            self.setTag(self.attrs['tag'])
-            del self.attrs['tag']
+        if "tag" in self.attrs:
+            self.setTag(self.attrs["tag"])
+            del self.attrs["tag"]
 
     def setTag(self, tag):
         self.tag = tag
@@ -76,99 +70,84 @@ class HtmlElem(object):
         self.attrs[name] = value
 
     def getAttrsHtml(self):
-        html = u''
+        html = ""
         for k, v in self.attrs.items():
-            html += u' %s="%s"' % (k, v)
+            html += f' {k}="{v}"'
         return html
 
     def openTagHtml(self):
-        return u"<%s%s>" % (self.tag, self.getAttrsHtml())
+        return f"<{self.tag}{self.getAttrsHtml()}>"
 
     def closeTagHtml(self):
-        return u"</%s>" % self.tag
+        return "</%s>" % self.tag
 
     def toHtml(self):
-        return u"%s%s%s" % (self.openTagHtml(), self.data.toHtml(), self.closeTagHtml())
+        return f"{self.openTagHtml()}{self.data.toHtml()}{self.closeTagHtml()}"
 
     def hasContents(self):
         return self.data.toHtml() != ""
 
 
 class HtmlParagraph(HtmlElem):
-
     def __init__(self, data, attrs=None):
-        HtmlElem.__init__(self, 'p', data, attrs)
+        HtmlElem.__init__(self, "p", data, attrs)
 
 
 class HtmlListItem(HtmlElem):
-
     def __init__(self, data, attrs=None):
-        HtmlElem.__init__(self, 'li', data, attrs)
+        HtmlElem.__init__(self, "li", data, attrs)
 
 
 class HtmlList(HtmlElem):
-
     def __init__(self, items, attrs=None):
         # make sure to have HtmlListItem items
         items = list(items)
         for i, item in enumerate(items):
             if not isinstance(item, HtmlListItem):
                 items[i] = HtmlListItem(item)
-        HtmlElem.__init__(self, 'ul', items, attrs)
+        HtmlElem.__init__(self, "ul", items, attrs)
 
 
 class HtmlTableCol(HtmlElem):
-
     def __init__(self, data, attrs=None):
-        HtmlElem.__init__(self, 'td', data, attrs)
+        HtmlElem.__init__(self, "td", data, attrs)
 
     def closeTagHtml(self):
         # FIX INVALID BEHAVIOR: an empty cell as last table's cell break margins
-        return u"&nbsp;%s" % HtmlElem.closeTagHtml(self)
+        return "&nbsp;%s" % HtmlElem.closeTagHtml(self)
 
 
 class HtmlTableRow(HtmlElem):
-
     def __init__(self, cols, attrs=None):
         # make sure to have HtmlTableCol items
         cols = list(cols)
         for i, c in enumerate(cols):
             if not isinstance(c, HtmlTableCol):
                 cols[i] = HtmlTableCol(c)
-        HtmlElem.__init__(self, 'tr', cols, attrs)
+        HtmlElem.__init__(self, "tr", cols, attrs)
 
 
 class HtmlTableHeader(HtmlTableRow):
-
     def __init__(self, cols, attrs=None):
         HtmlTableRow.__init__(self, cols, attrs)
         for c in self.getOriginalData():
-            c.setTag('th')
+            c.setTag("th")
 
 
 class HtmlTable(HtmlElem):
-
     def __init__(self, rows, attrs=None):
         # make sure to have HtmlTableRow items
         rows = list(rows)
         for i, r in enumerate(rows):
             if not isinstance(r, HtmlTableRow):
                 rows[i] = HtmlTableRow(r)
-        HtmlElem.__init__(self, 'table', rows, attrs)
-
-
-class HtmlWarning(HtmlContent):
-
-    def __init__(self, data):
-        data = ['<img src=":/icons/warning-20px.png">&nbsp;&nbsp; ', data]
-        HtmlContent.__init__(self, data)
+        HtmlElem.__init__(self, "table", rows, attrs)
 
 
 class HtmlSection(HtmlContent):
-
     def __init__(self, title, content=None):
-        data = ['<div class="section"><h2>', title, '</h2>']
+        data = ['<div class="section"><h2>', title, "</h2>"]
         if content is not None:
-            data.extend(['<div>', content, '</div>'])
-        data.append('</div>')
+            data.extend(["<div>", content, "</div>"])
+        data.append("</div>")
         HtmlContent.__init__(self, data)

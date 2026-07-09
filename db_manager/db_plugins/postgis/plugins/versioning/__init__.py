@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
 Name                 : Versioning plugin for DB Manager
@@ -20,8 +18,8 @@ email                : brush.tyler@gmail.com
 """
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QAction, QApplication
 from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QApplication
 
 # The load function is called when the "db" database or either one of its
 # children db objects (table o schema) is selected by the user.
@@ -31,8 +29,12 @@ from qgis.PyQt.QtGui import QIcon
 
 def load(db, mainwindow):
     # add the action to the DBManager menu
-    action = QAction(QIcon(), QApplication.translate("DBManagerPlugin", "&Change Logging…"), db)
-    mainwindow.registerAction(action, QApplication.translate("DBManagerPlugin", "&Table"), run)
+    action = QAction(
+        QIcon(), QApplication.translate("DBManagerPlugin", "&Change Logging…"), db
+    )
+    mainwindow.registerAction(
+        action, QApplication.translate("DBManagerPlugin", "&Table"), run
+    )
 
 
 # The run function is called once the user clicks on the action TopoViewer
@@ -47,6 +49,6 @@ def run(item, action, mainwindow):
 
     QApplication.restoreOverrideCursor()
     try:
-        dlg.exec_()
+        dlg.exec()
     finally:
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
