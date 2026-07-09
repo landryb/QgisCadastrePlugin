@@ -503,14 +503,16 @@ class cadastreImport(QObject):
         missing_files = [a for a in r_keys if a not in f_keys]
         if missing_files:
             msg = (
+                "<b>ANNULATION</b><br/>"
                 "<b>Des fichiers MAJIC importants sont manquants</b> :<br/>"
                 " <b>{}</b> <br/><br/>"
-                "Vérifier le chemin des fichiers MAJIC :<br/>"
+                "Vérifier le chemin configuré pour les fichiers MAJIC :<br/>"
                 "<b>{}</b> <br/><br/>"
                 "ainsi que les mots recherchés pour chaque type de fichier configurés dans les options du plugin Cadastre :<br/>"
                 "<b>{}</b><br/><br/><br/>"
-                "<b>NB:</b> Vous pouvez télécharger les fichiers TOPO à cette adresse :<br/>"
+                "<b>NB:</b> Vous pouvez télécharger le fichier TOPO à cette adresse :<br/>"
                 "<a href='{}'>{}</a><br/>"
+                "Il faut ensuite le décompresser pour avoir un fichier CSV ex: <i>TOPO_34.csv</i> puis supprimer le fichier compressé ex:<i> TOPO_34.csv.gz</i>)<br/>"
             ).format(
                 ', <br/>'.join(missing_files),
                 self.dialog.majicSourceDir,
