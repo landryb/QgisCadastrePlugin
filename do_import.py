@@ -546,6 +546,7 @@ class cadastre_import_cli(QObject):
 
 
 # Instantiate QGIS
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
 QgsApplication.setPrefixPath("/usr", True)
 qgs = QgsApplication([], True)
 QgsApplication.initQgis()
