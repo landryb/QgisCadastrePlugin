@@ -453,7 +453,8 @@ class cadastreImport(QObject):
         dep_dirs = {}
         for item in self.majicSourceFileNames:
             table = item['table']
-            file_regex = item['regex']
+            file_regex = item['regex'].upper()
+            self.qc.updateLog(f"Recherche des fichiers {table} contenant {file_regex} une fois en majuscule.")
             # Get MAJIC files for item
             maj_list = []
             for root, dirs, files in os.walk(self.dialog.majicSourceDir):
@@ -493,6 +494,7 @@ class cadastreImport(QObject):
                             self.qc.updateLog(f"Erreur de lecture du fichier '{file_path}': {err}")
                             raise
 
+            self.qc.updateLog(f"Nous avons trouvé {len(maj_list)} fichier{('s' if len(maj_list) > 1 else '')} pour {table}.")
             majic_files_found[table] = maj_list
 
         return dep_dirs, majic_files_found
