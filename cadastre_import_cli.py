@@ -1262,6 +1262,9 @@ class cadastreImport(QObject):
                     if self.dialog.dbType == 'spatialite':
                         spatialite_avoid_list = [
                             'geo_borne_annee_idx',
+                            'geo_tpoint_object_rid_idx', 'geo_tpoint_annee_idx',
+                            'geo_tline_object_rid_idx', 'geo_tline_annee_idx',
+                            'geo_tsurf_object_rid_idx', 'geo_tsurf_annee_idx',
                         ]
                         for avoid_item in spatialite_avoid_list:
                             if avoid_item in sql:
@@ -1408,8 +1411,6 @@ class cadastreImport(QObject):
 #                print (f"importing vec {vec}")
                 # import via ogr2ogr
                 self.importEdigeoVecToDatabase(vec)
-                # update mission multipolygons (ogr2ogr driver does not handle them yet)
-                self.updateMultipolygonFromVec(vec)
                 self.updateProgressBar()
                 if not self.go:
                     break
