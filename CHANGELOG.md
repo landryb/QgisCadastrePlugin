@@ -2,6 +2,59 @@
 
 ## Unreleased
 
+## 2.2.5 - 2025-11-17
+
+* Correction de la requête pour locaux - détails
+
+## 2.2.4 - 2025-11-17
+
+* Correction de la reconstruction d'adresse
+* Utilisation du système d'authentification de QGIS quand celui-ci est nécessaire pour l'import
+
+Merci à tous les contributeurs @jersig, @ThT12, @fthvd
+
+
+## 2.2.3 - 2025-10-23
+
+* Formatage EDIGeo - Erreur de suppression de l'index temporaire `geo_batiment_annee_idx`
+
+## 2.2.2 - 2025-10-23
+
+* Import MAJIC
+  * Corection de l'annulation de l'import si des fichiers sont manquants
+  * Ajout de message de suivie
+  * Correction de la règle de recherche de fichier, en la passant en majuscule comme le nom des fichiers
+
+## 2.2.1 - 2025-09-12
+
+* Import
+  * MAJIC - Annulation de l'import si des fichiers sont manquants, notamment `TOPO`.
+  * MAJIC - Ignore les fichiers d'archive `zip, tar, gz` en plus des fichiers déjà ignorés
+  * TOPO - Éviter l'import de doublons pour `commune` et `voie` via l'ajout
+    d'une contrainte d'unicité sur les champs `commune.commune` et `voie.voie`
+    et l'utilisation de `ON CONFLICT DO NOTHING` pendant l'`INSERT`
+  * Propriétaire - ignorer `dlign5` pour les adresse en France
+  * Correction du remplissage de la table `parcelle_info` lors d'un import spatialite
+* Fiches - Suppression du champ `dnatlc` des fiches d'information
+* Docs - TOPO: précision sur l'extension attendue et sur l'entête des fichiers CSV
+
+## 2.2.0 - 2025-07-31
+
+* Import - support du millésime 2025
+* Import - adaptation pour suivre les changements de format des fichiers TOPO
+* Import - Refonte de la création et du remplissage de la table `parcelle_info`
+  Cela optimise les performances pour les imports multiples dans la même base
+  pour de gros volumes de données (ex: plusieurs départements)
+* Import MAJIC - Meilleure détection des fichiers à ne pas charger pendant l'import
+  (PDF, DOC, DOCX, TXT)
+* Configuration - Suppression du champ TOPO en doublon
+* Outil de téléchargement d'EDIGEO : ajout des tags cadastre & lizmap
+* Code - Ajout d'une variable globale pour la version maximale
+* Code - Suppression de scripts SQL non utilisés
+* CI - Configuration modifiée pour Dependabot : il tourne maintenant tous les 4 mois
+
+Merci à tous les contributeurs @landryb, @MaelREBOUX, @Gustry, @Alain-LG
+
 ## 2.1.1 - 2025-04-24
 
 * Poursuite de la version précédente sur le support PyQt6

@@ -793,7 +793,7 @@ SELECT DISTINCT ON (ccodep,ccocom,dnupro,dnulp,dnuper)
   CASE WHEN trim(SUBSTRING(tmp,120,1))='' THEN NULL ELSE trim(SUBSTRING(tmp,120,1)) END AS gtyp6,
   SUBSTRING(tmp,121,30) AS dlign3,
   SUBSTRING(tmp,151,36) AS dlign4,
-  SUBSTRING(tmp,187,30) AS dlign5,
+  CASE WHEN trim(SUBSTRING(tmp,249,1))='' THEN '                              ' ELSE SUBSTRING(tmp,187,30) END AS dlign5,
   SUBSTRING(tmp,217,32) AS dlign6,
   SUBSTRING(tmp,249,3) AS ccopay,
   SUBSTRING(tmp,252,2) AS ccodep1a2,
@@ -1000,7 +1000,9 @@ SELECT
   NULL AS indldnbat,
   NULL AS motclas,
   '${LOT}' as lot
-FROM ${PREFIXE}topo WHERE substr(code_topo, 17, 2) = '13';
+FROM ${PREFIXE}topo WHERE substr(code_topo, 17, 2) = '13'
+ON CONFLICT DO NOTHING
+;
 
 -- Traitement: voie
 INSERT INTO ${PREFIXE}voie
@@ -1046,10 +1048,8 @@ SELECT
   '${LOT}' as lot
 FROM ${PREFIXE}topo
 WHERE substr(code_topo, 17, 2) = '14'
+ON CONFLICT DO NOTHING
 ;
-
--- purge des doublons : voie
-CREATE INDEX idxan_voie ON voie (annee);
 
 -- INDEXES
 CREATE INDEX idxan_suf ON suf (annee);
@@ -1067,6 +1067,8 @@ CREATE INDEX idxan_parcellecomposante ON parcellecomposante (annee);
 CREATE INDEX idx_lots_tmp1 ON lots (annee, ccodep, ccodir, ccocom, dnuprol);
 CREATE INDEX idxan_lotslocaux ON lotslocaux (annee);
 CREATE INDEX idxan_commune ON commune (annee);
+CREATE INDEX idxan_voie ON voie (annee);
+CREATE INDEX idx_voie_voie_substr ON voie ((SUBSTR(voie, 1, 6) || SUBSTR(voie, 12, 4)));
 CREATE INDEX proprietaire_dnupro_idx ON proprietaire (dnupro);
 CREATE INDEX proprietaire_ddenom_idx ON proprietaire (ddenom);
 CREATE INDEX parcelle_dnupro_idx ON parcelle (dnupro);
@@ -1074,6 +1076,7 @@ CREATE INDEX suf_parcelle_idx ON suf (parcelle);
 CREATE INDEX sufexoneration_suf_idx ON sufexoneration (suf);
 CREATE INDEX idx_proprietaire_ccocom  ON proprietaire (ccocom);
 CREATE INDEX idx_commune_ccocom  ON commune (ccocom);
+CREATE INDEX idx_commune_ccodep ON commune (ccodep);
 CREATE INDEX idx_proprietaire_ccodro  ON proprietaire (ccodro);
 CREATE INDEX idx_proprietaire_proprietaire ON proprietaire (proprietaire);
 CREATE INDEX idx_proprietaire_comptecommunal ON proprietaire (comptecommunal);
@@ -1086,6 +1089,14 @@ CREATE INDEX idx_pevexoneration_imposee_pev ON pevexoneration_imposee (pev);
 CREATE INDEX idx_pevtaxation_pev ON pevtaxation (pev);
 CREATE INDEX idx_parcelle_voie ON parcelle (voie);
 CREATE INDEX idx_parcelle_comptecommunal ON parcelle (comptecommunal);
+CREATE INDEX idx_parcelle_ccocom ON parcelle (ccocom);
+CREATE INDEX idx_parcelle_ccodep ON parcelle (ccodep);
+
+CREATE INDEX parcelle_info_geom_idx ON parcelle_info USING gist (geom);
+CREATE INDEX parcelle_info_geo_section_idx ON parcelle_info (geo_section);
+CREATE INDEX parcelle_info_codecommune_idx ON parcelle_info (codecommune);
+CREATE INDEX parcelle_info_geo_parcelle_idx ON parcelle_info (geo_parcelle);
+
 
 -- ANALYSES;
 ANALYZE ${PREFIXE}parcelle;

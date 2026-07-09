@@ -23,7 +23,7 @@ WITH infos AS (
             CASE WHEN trim(pr.dnomus) != trim(pr.dnomlp) THEN Coalesce( trim(pr.dnomus) || '/' || trim(pr.dprnus) || ', née ', '' ) ELSE '' END ||
             trim(coalesce(pr.ddenom, '')) ||
             '</td>' ||
-            '<td>' || ltrim(trim(coalesce(pr.dlign4, '')), '0') || trim(coalesce(pr.dlign5, '')) || ' ' || trim(coalesce(pr.dlign6, '')) || '</td>' ||
+            '<td>' || replace(ltrim(trim(coalesce(pr.dlign4, '')), '0') || ' ' || trim(coalesce(pr.dlign5, '')) || ' ' || trim(coalesce(pr.dlign6, '')), '  ',' ') || '</td>' ||
             CASE WHEN {not_for_third_part} THEN '<td>' || Coalesce( trim(cast(pr.jdatnss AS text) ), '-') || '</td>' ELSE '' END ||
             CASE WHEN {not_for_third_part} THEN '<td>' || coalesce(trim(pr.dldnss), '-') || '</td>' ELSE '' END ||
             '<td>' || Coalesce(ccodro_lib, '') || '</td>' ||
@@ -40,7 +40,6 @@ WITH infos AS (
     ccoplc_lib AS l10_nature_construction_particuliere,
     l10.jannat AS l10_annee_construction,
     l10.dnbniv AS l10_nombre_niveaux,
-    dnatlc_lib AS l10_nature_occupation,
 
     -- pev : informations générales
     pev.pev,
@@ -73,7 +72,6 @@ WITH infos AS (
     LEFT JOIN "dteloc" ON l10.dteloc = dteloc.dteloc
     LEFT JOIN "cconlc" ON l10.cconlc = cconlc.cconlc
     LEFT JOIN "ccoplc" ON l10.ccoplc = ccoplc.ccoplc
-    LEFT JOIN "dnatlc" ON l10.dnatlc = dnatlc.dnatlc
     LEFT JOIN "ccoaff" ON pev.ccoaff = ccoaff.ccoaff
     LEFT JOIN proprietaire AS pr ON pr.comptecommunal = l10.comptecommunal
     LEFT JOIN "ccodro" c2 ON pr.ccodro = c2.ccodro
@@ -89,8 +87,9 @@ WITH infos AS (
     l.dnvoiri, l.dindic,
     v.natvoi, v.libvoi, p.cconvo, p.dvoilib,
     l10.ccodep, l10.ccocom, l10.dnupro, l10.jdatat,
-    dteloc_lib, cconlc_lib, ccoplc_lib, l10.jannat, l10.dnbniv, dnatlc_lib,
-    pev.pev, ccoaff_lib, pev.ccostb, pev.dcapec, pev.dcetlc, pev.dvlpera, pev.gnexpl, pev.dnuref, pev.dcsplca, pev.dcsglca,
+    dteloc_lib, cconlc_lib, ccoplc_lib, l10.jannat, l10.dnbniv,
+    pev.pev, pev.dnupev, ccoaff_lib, pev.ccostb, pev.dcapec, pev.dcetlc,
+    pev.dvlper, pev.dvlpera, pev.gnexpl, pev.dnuref, pev.dcsplca, pev.dcsglca,
     pt.co_vlbaia, pt.gp_vlbaia, pt.de_vlbaia, pt.re_vlbaia, px.pexb, pt.co_bipevla, pt.gp_bipevla, pt.de_bipevla, pt.re_bipevla
 
     ORDER BY l_identifiant
@@ -184,7 +183,7 @@ source AS (
     SELECT
     parcelle,
     l_batiment, l_numero_entree, l_niveau_etage, l_numero_local, l_invariant, l_identifiant, l_numero_voirie, l_adresse,
-    l10_compte_proprietaire, l10_proprietaires, l10_date_acte, l10_type_local, l10_nature_local, l10_nature_occupation, l10_nature_construction_particuliere, l10_annee_construction, l10_nombre_niveaux,
+    l10_compte_proprietaire, l10_proprietaires, l10_date_acte, l10_type_local, l10_nature_local, l10_nature_construction_particuliere, l10_annee_construction, l10_nombre_niveaux,
     pev_dnupev, pev_affectation, pev_lettre_serie, pev_categorie, pev_entretien, pev_valeur_locative_ref, pev_valeur_locative_an, pev_nature_exoneration_permanente,
     pev_numero_local_type, pev_coefficient_situation_particuliere, pev_coefficient_situation_generale,
     co_vlbaia, gp_vlbaia, de_vlbaia, re_vlbaia, co_bipevla, gp_bipevla, de_bipevla, re_bipevla,
@@ -205,7 +204,7 @@ source AS (
     GROUP BY
     parcelle,
     l_batiment, l_numero_entree, l_niveau_etage, l_numero_local, l_invariant, l_identifiant, l_numero_voirie, l_adresse,
-    l10_compte_proprietaire, l10_proprietaires, l10_date_acte, l10_type_local, l10_nature_local, l10_nature_occupation, l10_nature_construction_particuliere, l10_annee_construction, l10_nombre_niveaux,
+    l10_compte_proprietaire, l10_proprietaires, l10_date_acte, l10_type_local, l10_nature_local, l10_nature_construction_particuliere, l10_annee_construction, l10_nombre_niveaux,
     pev_dnupev, pev_affectation, pev_lettre_serie, pev_categorie, pev_entretien, pev_valeur_locative_ref, pev_valeur_locative_an, pev_nature_exoneration_permanente,
     pev_numero_local_type, pev_coefficient_situation_particuliere, pev_coefficient_situation_generale,
     co_vlbaia, gp_vlbaia, de_vlbaia, re_vlbaia, co_bipevla, gp_bipevla, de_bipevla, re_bipevla
@@ -254,7 +253,6 @@ SELECT
         '<p>' ||
         '<b>Type: </b>' ||  l10_type_local ||
         '<br/><b>Nature: </b>' ||  l10_nature_local ||
-        '<br/><b>Occupation: </b>' ||  l10_nature_occupation ||
         '<br/><b>Construction: </b>' ||  l10_nature_construction_particuliere ||
         '<br/><b>Année de construction: </b>' ||  l10_annee_construction ||
         '<br/><b>Niveaux: </b>' ||  l10_nombre_niveaux ||
