@@ -400,7 +400,7 @@ class cadastre_import_cli(QObject):
         # set input values from settings
 
         cfg = os.getenv('QADASTRECFG','config.ini')
-        s = QSettings(cfg, QSettings.IniFormat)
+        s = QSettings(cfg, QSettings.Format.IniFormat)
         print("Using this config file for import parameters: "+cfg)
 
     def onClose(self):
@@ -458,7 +458,7 @@ class cadastre_import_cli(QObject):
         Check the user defined inpu data
         """
 
-        s = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.IniFormat)
+        s = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.Format.IniFormat)
         self.dataVersion = str(s.value('cadastre/dataVersion', '2014', type=str))
         self.dataYear = str(s.value('cadastre/dataYear','2014', type=str))
         self.majicSourceDir = str(s.value('cadastre/majicSourceDir','/tmp/qadastre/majic', type=str))

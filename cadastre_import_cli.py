@@ -90,7 +90,7 @@ class cadastreImport(QObject):
             self.targetSrid = '2154'
 
         # create temporary directories
-        s = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.IniFormat)
+        s = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.Format.IniFormat)
         temp_dir = s.value("cadastre/tempDir", type=str)
         if not temp_dir or not Path(temp_dir).exists():
             temp_dir = tempfile.gettempdir()
@@ -1441,7 +1441,7 @@ class cadastreImport(QObject):
 
         # Build ogr2ogr command
         conn_name = self.dialog.connectionName
-        settings = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.IniFormat)
+        settings = QSettings(os.getenv('QADASTRECFG','config.ini'), QSettings.Format.IniFormat)
         settings.beginGroup(f"/{self.db.dbplugin().connectionSettingsKey()}/{conn_name}")
 
         # normalising file path
