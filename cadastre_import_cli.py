@@ -1448,10 +1448,34 @@ class cadastreImport(QObject):
         if self.dialog.dbType == 'postgis':
             if not settings.contains("database"):  # non-existent entry?
                 raise Exception(self.tr('There is no defined database connection "%s".') % conn_name)
-            settingsList = ["host", "database", "username", "password"]
+            settingsList = [
+                "service", "host", "port", "database", "username", "password", "authcfg"
+            ]
             host, database, username, password = map(lambda x: settings.value(x, type=str), settingsList)
             port = settings.value("port", type=int)
             service = None
+            authcfg = None
+            # Get username/password from QGIS auth manager
+            if authcfg:
+                auth_mgr = QgsApplication.authManager()
+                cfg_obj = QgsAuthMethodConfig()
+
+                # loadAuthenticationConfig attend deux arguments en PyQGIS :
+                # 1. l’ID authcfg
+                # 2. un QStringList (ici, une simple liste Python vide)
+                success, cfg = auth_mgr.loadAuthenticationConfig(authcfg, cfg_obj, True)
+                if success and cfg.isValid():
+                    auth_info = cfg.configMap()
+                    username = auth_info.get('username', '')
+                    password = auth_info.get('password', '')
+
+                else:
+                    QgsMessageLog.logMessage(
+                        f"⚠️ Auth config '{authcfg}' invalide pour la connexion '{conn_name}'",
+                        level=Qgis.Warning
+                    )
+
+            # Build PG acess string for ogr2ogr command
             if service:
                 pg_access = 'PG:service={} active_schema={}'.format(
                     service,
