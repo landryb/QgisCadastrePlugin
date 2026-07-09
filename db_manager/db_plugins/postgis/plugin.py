@@ -23,7 +23,7 @@ import re
 
 from qgis.core import Qgis, QgsApplication, QgsSettings
 from qgis.gui import QgsMessageBar
-from qgis.PyQt.QtCore import QCoreApplication, QRegularExpression, Qt
+from qgis.PyQt.QtCore import QCoreApplication, QRegularExpression, Qt, QSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QApplication, QMessageBox
 
@@ -44,6 +44,7 @@ from ..plugin import (
 )
 from .connector import PostGisDBConnector
 
+import os
 
 def classFactory():
     return PostGisDBPlugin
@@ -75,7 +76,7 @@ class PostGisDBPlugin(DBPlugin):
 
     def connect(self, parent=None):
         conn_name = self.connectionName()
-        settings = QgsSettings()
+        settings = QgsSettings(fileName=os.getenv('QADASTRECFG','config.ini'), format=QSettings.Format.IniFormat)
         settings.beginGroup(f"/{self.connectionSettingsKey()}/{conn_name}")
 
         if not settings.contains("database"):  # non-existent entry?
