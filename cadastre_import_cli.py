@@ -1450,7 +1450,7 @@ class cadastreImport(QObject):
             if not settings.contains("database"):  # non-existent entry?
                 raise Exception(self.tr('There is no defined database connection "%s".') % conn_name)
             settingsList = [
-                "service", "host", "port", "database", "username", "password", "authcfg"
+                "host", "database", "username", "password"
             ]
             host, database, username, password = map(lambda x: settings.value(x, type=str), settingsList)
             port = settings.value("port", type=int)
