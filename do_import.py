@@ -3,11 +3,14 @@ __license__ = "GPL version 3"
 __email__ = "info@3liz.org"
 
 import os.path
+import sys
 import re
 import unicodedata
 
 from collections import namedtuple
 from pathlib import Path
+
+sys.path.append("/usr/share/qgis/python/")
 
 from db_manager.db_plugins import createDbPlugin
 from db_manager.db_plugins.plugin import BaseError
