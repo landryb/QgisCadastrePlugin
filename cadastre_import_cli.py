@@ -1411,6 +1411,8 @@ class cadastreImport(QObject):
 #                print (f"importing vec {vec}")
                 # import via ogr2ogr
                 self.importEdigeoVecToDatabase(vec)
+                # update mission multipolygons (ogr2ogr driver does not handle them yet)
+                self.updateMultipolygonFromVec(vec)
                 self.updateProgressBar()
                 if not self.go:
                     break
